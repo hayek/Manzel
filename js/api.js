@@ -239,7 +239,7 @@ const SheetsAPI = (function() {
 
   /**
    * Process residents data
-   * Columns: apartment number, family name, first name, property owner
+   * Columns: apartment number, family name, first name, property owner, phone
    * @param {Object} raw - Raw sheet data
    * @returns {Object} Map of apartment number to resident info
    */
@@ -252,6 +252,7 @@ const SheetsAPI = (function() {
       const familyName = row[1] ? String(row[1]).trim() : '';
       const firstName = row[2] ? String(row[2]).trim() : '';
       const propertyOwner = row[3] ? String(row[3]).trim() : '';
+      const phone = row[4] ? String(row[4]).trim() : '';
 
       // Store by apartment number for later mapping
       if (aptNumber) {
@@ -261,7 +262,8 @@ const SheetsAPI = (function() {
           firstName,
           // Display name: prefer family name, fallback to first name
           displayName: familyName || firstName,
-          propertyOwner
+          propertyOwner,
+          phone
         };
       }
     });
@@ -366,7 +368,8 @@ const SheetsAPI = (function() {
       years,
       owed,
       lastYearOwed,
-      propertyOwner: residentInfo.propertyOwner || ''
+      propertyOwner: residentInfo.propertyOwner || '',
+      phone: residentInfo.phone || ''
     };
   }
 

@@ -703,12 +703,54 @@ body {
 
 /* Owed Card - clean, colored backgrounds without gradients */
 .owed-card {
+  position: relative;
   background: var(--color-error);
   color: white;
   border-radius: var(--radius-xl);
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-lg);
   text-align: center;
+}
+
+.owed-card__actions {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+[dir="rtl"] .owed-card__actions {
+  right: auto;
+  left: var(--spacing-sm);
+}
+
+.owed-card__action-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs);
+  cursor: pointer;
+  color: white;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.owed-card__action-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.owed-card__action-btn:active {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.owed-card__action-btn--success {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .owed-card--paid {
@@ -1129,6 +1171,48 @@ body {
     box-shadow: none;
     border: 1px solid var(--color-gray-200);
   }
+}
+
+/* Admin Toggle */
+.admin-toggle {
+  position: absolute;
+  bottom: var(--spacing-lg);
+  right: calc(var(--spacing-lg) + 80px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
+[dir="rtl"] .admin-toggle {
+  right: auto;
+  left: calc(var(--spacing-lg) + 80px);
+}
+
+.admin-toggle:hover {
+  opacity: 0.8;
+  background: var(--color-gray-100);
+  border-color: var(--color-gray-400);
+}
+
+.admin-toggle--active {
+  opacity: 1;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.admin-toggle--active:hover {
+  opacity: 1;
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 /* Theme Toggle Dropdown */

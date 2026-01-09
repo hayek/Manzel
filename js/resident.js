@@ -52,6 +52,9 @@ const ResidentPage = (function() {
       renderLastYearOwed(residentData.lastYearOwed, residentData.payments);
       renderPaymentHistory(residentData.payments, residentData.years);
 
+      // Set up action buttons for debt message (copy and WhatsApp)
+      setupActionButtons();
+
     } catch (error) {
       console.error('Failed to load resident data:', error);
       showError();
@@ -299,6 +302,199 @@ const ResidentPage = (function() {
    */
   function formatNumber(num) {
     return new Intl.NumberFormat('he-IL').format(num);
+  }
+
+  /**
+   * Get unpaid months for a given year
+   * @param {Array} yearPayments - Payment data for the year
+   * @param {number} monthLimit - Number of months to check (12 for past year, current month for current year)
+   * @returns {Array} List of unpaid month names
+   */
+  function getUnpaidMonthsList(yearPayments, monthLimit) {
+    const monthlyAmount = 50;
+    const unpaidMonths = [];
+
+    for (let i = 0; i < monthLimit; i++) {
+      const payment = yearPayments[i];
+      if (!payment || payment.amount === null) {
+        unpaidMonths.push(I18n.getMonthName(i));
+      } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
+        unpaidMonths.push(I18n.getMonthName(i) + ' (' + I18n.t('partial') + ')');
+      }
+    }
+
+    return unpaidMonths;
+  }
+
+  /**
+   * Generate the debt message text
+   * @returns {string} The formatted debt message
+   */
+  function generateDebtMessage() {
+    if (!residentData) return '';
+
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    const lastYear = currentYear - 1;
+
+    const lines = [];
+
+    // Greeting
+    lines.push(I18n.t('debtMessageGreeting'));
+    lines.push('');
+    lines.push(I18n.t('debtMessageIntro'));
+    lines.push('');
+
+    // Current year debt
+    if (residentData.owed > 0) {
+      const yearPayments = residentData.payments[currentYear] || [];
+      const unpaidMonths = getUnpaidMonthsList(yearPayments, currentMonth);
+
+      let currentYearLine = I18n.t('debtMessageCurrentYear')
+        .replace('{amount}', formatNumber(residentData.owed))
+        .replace('{year}', currentYear);
+
+      lines.push(currentYearLine);
+
+      if (unpaidMonths.length > 0) {
+        lines.push(I18n.t('debtMessageMonths').replace('{months}', unpaidMonths.join(', ')));
+      }
+    }
+
+    // Last year debt
+    if (residentData.lastYearOwed > 0) {
+      lines.push('');
+      const yearPayments = residentData.payments[lastYear] || [];
+      const unpaidMonths = getUnpaidMonthsList(yearPayments, 12);
+
+      // Use different message if there's no current year debt
+      const lastYearKey = residentData.owed > 0 ? 'debtMessageLastYear' : 'debtMessageLastYearOnly';
+      let lastYearLine = I18n.t(lastYearKey)
+        .replace('{amount}', formatNumber(residentData.lastYearOwed))
+        .replace('{year}', lastYear);
+
+      lines.push(lastYearLine);
+
+      if (unpaidMonths.length > 0) {
+        lines.push(I18n.t('debtMessageLastYearMonths').replace('{months}', unpaidMonths.join(', ')));
+      }
+    }
+
+    // Link to resident page
+    const params = getUrlParams();
+    const residentUrl = `https://hayek.github.io/Manzel/resident.html?name=${encodeURIComponent(params.name)}&apt=${encodeURIComponent(params.apt || '')}`;
+    lines.push('');
+    lines.push(I18n.t('debtMessageLink'));
+    lines.push(residentUrl);
+
+    // Closing
+    lines.push('');
+    lines.push(I18n.t('debtMessageClosing'));
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Copy debt message to clipboard
+   */
+  function copyDebtMessage() {
+    const message = generateDebtMessage();
+    if (!message) return;
+
+    navigator.clipboard.writeText(message).then(() => {
+      // Show feedback
+      const copyBtn = document.getElementById('copyDebtBtn');
+      copyBtn.classList.add('owed-card__action-btn--success');
+
+      // Change icon to checkmark temporarily
+      const originalIcon = copyBtn.innerHTML;
+      copyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+      setTimeout(() => {
+        copyBtn.classList.remove('owed-card__action-btn--success');
+        copyBtn.innerHTML = originalIcon;
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  }
+
+  /**
+   * Format phone number for WhatsApp
+   * @param {string} phone - Phone number
+   * @returns {string} Formatted phone number (international format without +)
+   */
+  function formatPhoneForWhatsApp(phone) {
+    // Remove all non-digit characters
+    let digits = phone.replace(/\D/g, '');
+
+    // If starts with 0, assume Israeli number and replace with 972
+    if (digits.startsWith('0')) {
+      digits = '972' + digits.substring(1);
+    }
+
+    return digits;
+  }
+
+  /**
+   * Open WhatsApp with debt message
+   */
+  function openWhatsApp() {
+    if (!residentData || !residentData.phone) return;
+
+    const message = generateDebtMessage();
+    const phone = formatPhoneForWhatsApp(residentData.phone);
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, '_blank');
+  }
+
+  /**
+   * Check if admin mode is enabled
+   * @returns {boolean} True if admin mode is enabled
+   */
+  function isAdminMode() {
+    return localStorage.getItem('manzel_admin') === 'true';
+  }
+
+  /**
+   * Set up action buttons (copy and WhatsApp)
+   */
+  function setupActionButtons() {
+    const actionsContainer = document.querySelector('.owed-card__actions');
+    const copyBtn = document.getElementById('copyDebtBtn');
+    const whatsappBtn = document.getElementById('whatsappBtn');
+
+    // Hide all buttons if there's no debt or admin mode is off
+    if (residentData.owed <= 0 && residentData.lastYearOwed <= 0) {
+      if (actionsContainer) actionsContainer.style.display = 'none';
+      return;
+    }
+
+    // Hide if admin mode is off (will be shown by admin toggle script)
+    if (!isAdminMode()) {
+      if (actionsContainer) actionsContainer.style.display = 'none';
+    }
+
+    // Set up copy button
+    if (copyBtn) {
+      copyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        copyDebtMessage();
+      });
+    }
+
+    // Set up WhatsApp button (hide if no phone number)
+    if (whatsappBtn) {
+      if (!residentData.phone) {
+        whatsappBtn.style.display = 'none';
+      } else {
+        whatsappBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openWhatsApp();
+        });
+      }
+    }
   }
 
   /**

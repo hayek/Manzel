@@ -79,7 +79,17 @@ const I18n = (function() {
       paymentCash: 'מזומן',
       themeLight: 'בהיר',
       themeAuto: 'אוטו',
-      themeDark: 'כהה'
+      themeDark: 'כהה',
+      debtMessageGreeting: 'שלום,',
+      debtMessageIntro: 'אני פונה אליך בנושא תשלום ועד הבית.',
+      debtMessageCurrentYear: 'נכון להיום, קיים חוב של {amount} ₪ עבור שנת {year}',
+      debtMessageMonths: 'עבור החודשים: {months}',
+      debtMessageLastYear: 'בנוסף, קיים חוב משנה שעברה ({year}) בסך {amount} ₪',
+      debtMessageLastYearOnly: 'קיים חוב משנה שעברה ({year}) בסך {amount} ₪',
+      debtMessageLastYearMonths: 'עבור החודשים: {months}',
+      debtMessageClosing: 'אשמח אם תוכל/י להסדיר את התשלום בהקדם. תודה רבה!',
+      debtMessageLink: 'לצפייה בפרטים:',
+      copied: 'הועתק'
     },
     en: {
       buildingAddress: 'Derech Allenby 131A, Haifa',
@@ -119,7 +129,17 @@ const I18n = (function() {
       paymentCash: 'Cash',
       themeLight: 'Light',
       themeAuto: 'Auto',
-      themeDark: 'Dark'
+      themeDark: 'Dark',
+      debtMessageGreeting: 'Hello,',
+      debtMessageIntro: 'I am reaching out regarding building maintenance payments.',
+      debtMessageCurrentYear: 'As of today, there is an outstanding balance of {amount} ₪ for {year}',
+      debtMessageMonths: 'for the months: {months}',
+      debtMessageLastYear: 'Additionally, there is a debt from last year ({year}) of {amount} ₪',
+      debtMessageLastYearOnly: 'There is a debt from last year ({year}) of {amount} ₪',
+      debtMessageLastYearMonths: 'for the months: {months}',
+      debtMessageClosing: 'I would appreciate if you could settle the payment at your earliest convenience. Thank you!',
+      debtMessageLink: 'View details:',
+      copied: 'Copied'
     },
     ar: {
       buildingAddress: 'شارع أللنبي 131أ، حيفا',
@@ -159,7 +179,17 @@ const I18n = (function() {
       paymentCash: 'نقداً',
       themeLight: 'فاتح',
       themeAuto: 'تلقائي',
-      themeDark: 'داكن'
+      themeDark: 'داكن',
+      debtMessageGreeting: 'مرحباً،',
+      debtMessageIntro: 'أتواصل معك بخصوص دفعات صيانة المبنى.',
+      debtMessageCurrentYear: 'حتى اليوم، هناك رصيد مستحق قدره {amount} ₪ لعام {year}',
+      debtMessageMonths: 'عن الأشهر: {months}',
+      debtMessageLastYear: 'بالإضافة إلى ذلك، هناك دين من العام الماضي ({year}) بقيمة {amount} ₪',
+      debtMessageLastYearOnly: 'هناك دين من العام الماضي ({year}) بقيمة {amount} ₪',
+      debtMessageLastYearMonths: 'عن الأشهر: {months}',
+      debtMessageClosing: 'سأكون ممتناً لو تمكنت من تسوية الدفعة في أقرب وقت ممكن. شكراً لك!',
+      debtMessageLink: 'لعرض التفاصيل:',
+      copied: 'تم النسخ'
     },
     ru: {
       buildingAddress: 'Дерех Алленби 131А, Хайфа',
@@ -199,7 +229,17 @@ const I18n = (function() {
       paymentCash: 'Наличные',
       themeLight: 'Светлая',
       themeAuto: 'Авто',
-      themeDark: 'Тёмная'
+      themeDark: 'Тёмная',
+      debtMessageGreeting: 'Здравствуйте,',
+      debtMessageIntro: 'Обращаюсь к вам по поводу оплаты содержания дома.',
+      debtMessageCurrentYear: 'На сегодняшний день имеется задолженность в размере {amount} ₪ за {year} год',
+      debtMessageMonths: 'за месяцы: {months}',
+      debtMessageLastYear: 'Кроме того, есть долг за прошлый год ({year}) в размере {amount} ₪',
+      debtMessageLastYearOnly: 'Есть долг за прошлый год ({year}) в размере {amount} ₪',
+      debtMessageLastYearMonths: 'за месяцы: {months}',
+      debtMessageClosing: 'Буду признателен, если вы сможете произвести оплату в ближайшее время. Спасибо!',
+      debtMessageLink: 'Посмотреть детали:',
+      copied: 'Скопировано'
     },
     uk: {
       buildingAddress: 'Дерех Алленбі 131А, Хайфа',
@@ -239,7 +279,17 @@ const I18n = (function() {
       paymentCash: 'Готівка',
       themeLight: 'Світла',
       themeAuto: 'Авто',
-      themeDark: 'Темна'
+      themeDark: 'Темна',
+      debtMessageGreeting: 'Вітаю,',
+      debtMessageIntro: 'Звертаюсь до вас щодо оплати утримання будинку.',
+      debtMessageCurrentYear: 'Станом на сьогодні є заборгованість у розмірі {amount} ₪ за {year} рік',
+      debtMessageMonths: 'за місяці: {months}',
+      debtMessageLastYear: 'Крім того, є борг за минулий рік ({year}) у розмірі {amount} ₪',
+      debtMessageLastYearOnly: 'Є борг за минулий рік ({year}) у розмірі {amount} ₪',
+      debtMessageLastYearMonths: 'за місяці: {months}',
+      debtMessageClosing: 'Буду вдячний, якщо ви зможете здійснити оплату найближчим часом. Дякую!',
+      debtMessageLink: 'Переглянути деталі:',
+      copied: 'Скопійовано'
     }
   };
 
