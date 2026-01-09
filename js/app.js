@@ -140,7 +140,8 @@ const App = (function() {
     const monthlyAmount = 50;
     let owed = 0;
 
-    for (let i = 0; i <= currentMonth; i++) {
+    // Debt is counted from the next month (e.g., Jan unpaid counts as debt starting Feb)
+    for (let i = 0; i < currentMonth; i++) {
       const payment = yearPayments[i];
       if (!payment || payment.amount === null || payment.amount === 0) {
         owed += monthlyAmount;
@@ -286,16 +287,12 @@ const App = (function() {
       const priceCell = document.createElement('td');
       priceCell.textContent = formatNumber(expense.price) + ' ₪';
 
-      const receiptCell = document.createElement('td');
-      if (expense.receipt && expense.receipt.startsWith('http')) {
-        receiptCell.textContent = '📄';
-      } else {
-        receiptCell.textContent = expense.receipt || '-';
-      }
+      const notesCell = document.createElement('td');
+      notesCell.textContent = expense.notes || '-';
 
       row.appendChild(typeCell);
       row.appendChild(priceCell);
-      row.appendChild(receiptCell);
+      row.appendChild(notesCell);
 
       // Click handler to navigate to expense detail
       row.addEventListener('click', () => {

@@ -318,7 +318,8 @@ const SheetsAPI = (function() {
     let owed = 0;
     const currentYearPayments = residentPayments[currentYear] || [];
 
-    for (let i = 0; i <= currentMonth; i++) {
+    // Debt is counted from the next month (e.g., Jan unpaid counts as debt starting Feb)
+    for (let i = 0; i < currentMonth; i++) {
       const payment = currentYearPayments[i];
       if (!payment || payment.amount === null || payment.amount === 0) {
         owed += monthlyAmount;
