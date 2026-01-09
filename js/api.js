@@ -5,7 +5,7 @@
 
 const SheetsAPI = (function() {
   const SPREADSHEET_ID = '1_zdYPJNYSifPeQPI5CtqhfnvgzOFgxjOUe0jJDVzo1c';
-  const CACHE_KEY = 'manzel_data_v3'; // Updated to force cache refresh
+  const CACHE_KEY = 'manzel_data_v4'; // Updated to include Residents table
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   /**
@@ -111,18 +111,20 @@ const SheetsAPI = (function() {
       if (cached) return cached;
     }
 
-    const [payments, total, expenses, building] = await Promise.all([
+    const [payments, total, expenses, building, residents] = await Promise.all([
       fetchSheet('Payments'),
       fetchSheet('total'),
       fetchSheet('Expence'),
-      fetchSheet('building')
+      fetchSheet('building'),
+      fetchSheet('Residents')
     ]);
 
     const data = {
       payments: processPayments(payments),
       total: processTotal(total),
       expenses: processExpenses(expenses),
-      building: processBuilding(building)
+      building: processBuilding(building),
+      residents: processResidents(residents)
     };
 
     setCachedData(data);
@@ -236,6 +238,39 @@ const SheetsAPI = (function() {
   }
 
   /**
+   * Process residents data
+   * Columns: family name, first name, property owner
+   * @param {Object} raw - Raw sheet data
+   * @returns {Object} Map of payment column name to resident info
+   */
+  function processResidents(raw) {
+    const { rows } = raw;
+    const residentsMap = {};
+
+    rows.forEach(row => {
+      const familyName = row[0] ? String(row[0]).trim() : '';
+      const firstName = row[1] ? String(row[1]).trim() : '';
+      const propertyOwner = row[2] ? String(row[2]).trim() : '';
+
+      // The key should match the payment column name
+      // Use family name as key if available, otherwise first name
+      const paymentKey = familyName || firstName;
+
+      if (paymentKey) {
+        residentsMap[paymentKey] = {
+          familyName,
+          firstName,
+          propertyOwner,
+          // Display name: use family name if available, otherwise first name
+          displayName: familyName || firstName
+        };
+      }
+    });
+
+    return residentsMap;
+  }
+
+  /**
    * Process building layout data
    * Building sheet has apartment numbers (1-9) arranged by floor
    * @param {Object} raw - Raw sheet data
@@ -272,6 +307,7 @@ const SheetsAPI = (function() {
     const data = await fetchAllData();
     const residentPayments = data.payments.payments[residentName] || {};
     const years = data.payments.years || [];
+    const residentInfo = data.residents[residentName] || {};
 
     // Calculate amount owed (unpaid months for current year up to current month)
     const now = new Date();
@@ -310,7 +346,8 @@ const SheetsAPI = (function() {
       payments: residentPayments, // { year: [12 months] }
       years,
       owed,
-      lastYearOwed
+      lastYearOwed,
+      propertyOwner: residentInfo.propertyOwner || ''
     };
   }
 

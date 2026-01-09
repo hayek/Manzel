@@ -44,6 +44,7 @@ const ResidentPage = (function() {
       residentData = await SheetsAPI.getResidentData(params.name);
 
       // Render the page
+      renderPropertyOwner(residentData.propertyOwner);
       renderOwedAmount(residentData.owed);
       renderLastYearOwed(residentData.lastYearOwed);
       renderPaymentHistory(residentData.payments, residentData.years);
@@ -51,6 +52,20 @@ const ResidentPage = (function() {
     } catch (error) {
       console.error('Failed to load resident data:', error);
       showError();
+    }
+  }
+
+  /**
+   * Render property owner info
+   * @param {string} propertyOwner - Property owner name
+   */
+  function renderPropertyOwner(propertyOwner) {
+    const ownerRow = document.getElementById('propertyOwnerRow');
+    const ownerEl = document.getElementById('propertyOwner');
+
+    if (propertyOwner && propertyOwner.trim()) {
+      ownerRow.classList.remove('hidden');
+      ownerEl.textContent = propertyOwner;
     }
   }
 

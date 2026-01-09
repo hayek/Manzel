@@ -362,6 +362,21 @@ body {
   border-radius: var(--radius-sm);
 }
 
+.apartment__right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.apartment__debt {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-error);
+  background: var(--color-surface-secondary);
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+}
+
 /* Payment Boxes - softer colors */
 .payment-boxes {
   display: grid;
@@ -678,6 +693,12 @@ body {
 .resident-header__apt {
   font-size: 0.9375rem;
   color: var(--color-text-secondary);
+}
+
+.resident-header__owner {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
 }
 
 /* Owed Card - clean, colored backgrounds without gradients */

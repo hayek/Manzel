@@ -18,7 +18,7 @@ const App = (function() {
 
       // Render all sections
       renderTotal(appData.total);
-      renderBuilding(appData.building, appData.payments);
+      renderBuilding(appData.building, appData.payments, appData.residents);
       renderExpenses(appData.expenses);
 
     } catch (error) {
@@ -45,8 +45,9 @@ const App = (function() {
    * Render building layout with payment status
    * @param {Array} floors - Building floors data (apartment numbers per floor)
    * @param {Object} paymentsData - Payments data
+   * @param {Object} residentsData - Residents info map
    */
-  function renderBuilding(floors, paymentsData) {
+  function renderBuilding(floors, paymentsData, residentsData) {
     const loading = document.getElementById('buildingLoading');
     const grid = document.getElementById('buildingGrid');
 
@@ -60,7 +61,7 @@ const App = (function() {
 
     // Render each floor (floors are already in top-to-bottom order)
     floors.forEach((floor) => {
-      const floorEl = createFloorElement(floor, residents, paymentsData);
+      const floorEl = createFloorElement(floor, residents, paymentsData, residentsData);
       grid.appendChild(floorEl);
     });
   }
@@ -70,9 +71,10 @@ const App = (function() {
    * @param {Object} floor - Floor data { number, apartments: [aptNumbers] }
    * @param {Array} residents - Residents names array (index 0 = apt 1)
    * @param {Object} paymentsData - Payments data
+   * @param {Object} residentsData - Residents info map
    * @returns {HTMLElement} Floor element
    */
-  function createFloorElement(floor, residents, paymentsData) {
+  function createFloorElement(floor, residents, paymentsData, residentsData) {
     const floorEl = document.createElement('div');
     floorEl.className = 'floor';
 
@@ -93,9 +95,13 @@ const App = (function() {
     // Create apartment cards - apartments is array of apartment numbers
     floor.apartments.forEach(aptNumber => {
       // Map apartment number to resident name (apt 1 = residents[0], etc.)
-      const residentName = residents[aptNumber - 1] || `${I18n.t('apartment')} ${aptNumber}`;
+      const paymentKey = residents[aptNumber - 1] || '';
+      // Get display name from residents data, fallback to payment key
+      const residentInfo = residentsData[paymentKey] || {};
+      const displayName = residentInfo.displayName || paymentKey || `${I18n.t('apartment')} ${aptNumber}`;
       const apt = {
-        name: residentName,
+        name: paymentKey, // Keep original name for payment lookup
+        displayName: displayName,
         number: aptNumber
       };
       const aptEl = createApartmentElement(apt, paymentsData);
@@ -124,26 +130,49 @@ const App = (function() {
 
     const name = document.createElement('span');
     name.className = 'apartment__name';
-    name.textContent = apt.name;
+    name.textContent = apt.displayName || apt.name;
+
+    // Calculate debt
+    const residentPayments = paymentsData.payments[apt.name] || {};
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const yearPayments = residentPayments[currentYear] || [];
+    const monthlyAmount = 50;
+    let owed = 0;
+
+    for (let i = 0; i <= currentMonth; i++) {
+      const payment = yearPayments[i];
+      if (!payment || payment.amount === null || payment.amount === 0) {
+        owed += monthlyAmount;
+      } else if (payment.amount < monthlyAmount) {
+        owed += monthlyAmount - payment.amount;
+      }
+    }
+
+    // Right side with debt and apt number
+    const rightSide = document.createElement('div');
+    rightSide.className = 'apartment__right';
+
+    // Show debt if any (left of apt number)
+    if (owed > 0) {
+      const debtEl = document.createElement('div');
+      debtEl.className = 'apartment__debt';
+      debtEl.textContent = `${I18n.t('debt')}: ${formatNumber(owed)} ₪`;
+      rightSide.appendChild(debtEl);
+    }
 
     const number = document.createElement('span');
     number.className = 'apartment__number';
     number.textContent = `${I18n.t('apartment')} ${apt.number}`;
+    rightSide.appendChild(number);
 
     header.appendChild(name);
-    header.appendChild(number);
+    header.appendChild(rightSide);
     aptEl.appendChild(header);
 
     // Payment boxes (12 months for current year)
-    const residentPayments = paymentsData.payments[apt.name] || {};
     const boxesContainer = document.createElement('div');
     boxesContainer.className = 'payment-boxes';
-
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const yearPayments = residentPayments[currentYear] || [];
-
-    console.log(`Resident: ${apt.name}, Year: ${currentYear}, Payments:`, yearPayments);
 
     for (let i = 0; i < 12; i++) {
       const box = document.createElement('div');
