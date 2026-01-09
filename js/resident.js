@@ -68,12 +68,17 @@ const ResidentPage = (function() {
    */
   function renderResidentName(familyName, firstName) {
     const nameEl = document.getElementById('residentName');
+    const skeletonName = document.getElementById('skeletonName');
 
     // Build full name: family name + first name
     const parts = [familyName, firstName].filter(n => n && n.trim());
     if (parts.length > 0) {
       nameEl.textContent = parts.join(' ');
     }
+
+    // Hide skeleton, show name
+    if (skeletonName) skeletonName.classList.add('hidden');
+    nameEl.classList.remove('hidden');
   }
 
   /**
@@ -99,6 +104,16 @@ const ResidentPage = (function() {
     const owedCard = document.getElementById('owedCard');
     const owedAmount = document.getElementById('owedAmount');
     const owedCurrency = owedAmount.nextElementSibling;
+    const owedLabel = owedCard.querySelector('.owed-card__label');
+    const owedAmountContainer = owedCard.querySelector('.owed-card__amount');
+
+    // Hide skeletons
+    owedCard.querySelectorAll('.skeleton').forEach(el => el.classList.add('hidden'));
+    owedCard.classList.remove('owed-card--loading');
+
+    // Show real content
+    if (owedLabel) owedLabel.classList.remove('hidden');
+    if (owedAmountContainer) owedAmountContainer.classList.remove('hidden');
 
     if (owed <= 0) {
       owedCard.classList.add('owed-card--paid');
@@ -465,15 +480,17 @@ const ResidentPage = (function() {
     const copyBtn = document.getElementById('copyDebtBtn');
     const whatsappBtn = document.getElementById('whatsappBtn');
 
-    // Hide all buttons if there's no debt or admin mode is off
+    // Hide all buttons if there's no debt
     if (residentData.owed <= 0 && residentData.lastYearOwed <= 0) {
-      if (actionsContainer) actionsContainer.style.display = 'none';
       return;
     }
 
-    // Hide if admin mode is off (will be shown by admin toggle script)
-    if (!isAdminMode()) {
-      if (actionsContainer) actionsContainer.style.display = 'none';
+    // Show or hide based on admin mode
+    if (actionsContainer) {
+      actionsContainer.classList.remove('hidden');
+      if (!isAdminMode()) {
+        actionsContainer.style.display = 'none';
+      }
     }
 
     // Set up copy button
@@ -507,8 +524,17 @@ const ResidentPage = (function() {
     errorDiv.textContent = I18n.t('error');
     container.insertBefore(errorDiv, document.querySelector('.resident-header'));
 
-    // Hide loading spinner
-    document.getElementById('historyLoading').classList.add('hidden');
+    // Hide all skeletons
+    document.querySelectorAll('.skeleton, .skeleton-history').forEach(el => {
+      el.classList.add('hidden');
+    });
+
+    // Hide owed card loading state
+    const owedCard = document.getElementById('owedCard');
+    if (owedCard) {
+      owedCard.classList.remove('owed-card--loading');
+      owedCard.classList.add('hidden');
+    }
   }
 
   // Initialize on DOM ready

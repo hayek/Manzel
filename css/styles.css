@@ -1000,6 +1000,100 @@ body {
   }
 }
 
+/* Skeleton Loading - Shimmer Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-200) 25%,
+    var(--color-gray-100) 50%,
+    var(--color-gray-200) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton--name {
+  height: 2rem;
+  width: 60%;
+  margin-bottom: var(--spacing-xs);
+}
+
+.skeleton--label {
+  height: 0.875rem;
+  width: 50%;
+  margin: 0 auto var(--spacing-sm);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton--amount {
+  height: 2.5rem;
+  width: 40%;
+  margin: 0 auto;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Owed card loading state */
+.owed-card--loading {
+  background: var(--color-gray-300);
+}
+
+/* Skeleton history container */
+.skeleton-history {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-gray-200);
+}
+
+.skeleton--history-header {
+  height: 52px;
+  border-radius: 0;
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-100) 25%,
+    var(--color-gray-50) 50%,
+    var(--color-gray-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.skeleton--history-item {
+  height: 52px;
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.skeleton--history-item:last-child {
+  border-bottom: none;
+}
+
 /* Error State - subtle */
 .error {
   background: rgba(255, 59, 48, 0.1);
