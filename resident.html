@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Resident payment details">
+  <title>Manzel - Resident Details</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="container">
+    <!-- Back Button -->
+    <button class="back-btn" id="backBtn">
+      <span>←</span>
+      <span data-i18n="back">חזרה</span>
+    </button>
+
+    <!-- Resident Info -->
+    <section class="resident-header" id="residentHeader">
+      <h2 class="resident-header__name" id="residentName">-</h2>
+      <p class="resident-header__apt">
+        <span data-i18n="apartment">דירה</span>
+        <span id="residentApt">-</span>
+      </p>
+    </section>
+
+    <!-- Amount Owed -->
+    <section class="owed-card" id="owedCard">
+      <p class="owed-card__label" data-i18n="amountOwed">חוב עד החודש הנוכחי</p>
+      <p class="owed-card__amount">
+        <span id="owedAmount">0</span>
+        <span data-i18n="currency">₪</span>
+      </p>
+    </section>
+
+    <!-- Last Year Owed -->
+    <section class="owed-card owed-card--secondary hidden" id="lastYearOwedCard">
+      <p class="owed-card__label" data-i18n="lastYearOwed">חוב משנה שעברה</p>
+      <p class="owed-card__amount">
+        <span id="lastYearOwedAmount">0</span>
+        <span data-i18n="currency">₪</span>
+      </p>
+    </section>
+
+    <!-- Payment History -->
+    <section>
+      <h2 class="section-title" data-i18n="paymentHistory">היסטוריית תשלומים</h2>
+      <div class="loading" id="historyLoading">
+        <div class="loading__spinner"></div>
+      </div>
+      <div class="payment-history hidden" id="paymentHistory">
+        <!-- Payment items will be rendered here by JavaScript -->
+      </div>
+    </section>
+
+    <!-- Language Selector -->
+    <section class="language-section">
+      <select class="language-dropdown" id="languageSelector">
+        <option value="he">עברית</option>
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+        <option value="uk">Українська</option>
+      </select>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Manzel &copy; 2025</p>
+  </footer>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/resident.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Building management - payment options">
+  <title>Manzel - Payment</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="container">
+    <!-- Back Button -->
+    <button class="back-btn" onclick="window.location.href='index.html'">
+      <span class="back-btn__arrow">&larr;</span>
+      <span data-i18n="back">חזרה</span>
+    </button>
+
+    <!-- Payment Header -->
+    <section class="payment-card">
+      <h1 class="payment-card__title" data-i18n="paymentTitle">תשלום עבור ועד בית</h1>
+
+      <div class="payment-card__info">
+        <p data-i18n="paymentMonthly">בעל דירה מחוייב בתשלום 50 שקלים עבור כל חודש.</p>
+        <p class="payment-card__discount" data-i18n="paymentDiscount">הנחה למשלמים מראש עבור כל השנה 550 שקל בלבד (במקום 600)</p>
+      </div>
+
+      <p class="payment-card__subtitle" data-i18n="paymentMethods">לנוחיותכם ניתן לשלם באמצעות אחת הדרכים הבאות:</p>
+
+      <!-- Payment Options -->
+      <div class="payment-options">
+        <!-- Cash -->
+        <div class="payment-option">
+          <div class="payment-option__icon payment-option__icon--cash">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="9" r="7"></circle>
+              <circle cx="15" cy="15" r="7"></circle>
+            </svg>
+          </div>
+          <span class="payment-option__label" data-i18n="paymentCash">מזומן</span>
+        </div>
+
+        <!-- BIT -->
+        <a href="https://www.bitpay.co.il/app/me/A80E9056-7FF3-886A-7C1C-108181B9A0A04C02" target="_blank" rel="noopener" class="payment-option payment-option--clickable">
+          <img src="assets/Bit-icon.png" alt="BIT" class="payment-option__img">
+          <span class="payment-option__label">BIT</span>
+        </a>
+
+        <!-- Paybox -->
+        <a href="https://payboxapp.page.link/VKVE2Qh81DZXyLV97" target="_blank" rel="noopener" class="payment-option payment-option--clickable">
+          <img src="assets/paybox-icon.jpg" alt="Paybox" class="payment-option__img">
+          <span class="payment-option__label">Paybox</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Language Selector -->
+    <section class="language-section">
+      <select class="language-dropdown" id="languageSelector">
+        <option value="he">עברית</option>
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+        <option value="uk">Українська</option>
+      </select>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Manzel &copy; 2025</p>
+  </footer>
+
+  <script src="js/i18n.js"></script>
+</body>
+</html>

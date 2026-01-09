@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Expense details">
+  <title>Manzel - Expense Details</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="container">
+    <!-- Back Button -->
+    <button class="back-btn" id="backBtn">
+      <span>←</span>
+      <span data-i18n="back">חזרה</span>
+    </button>
+
+    <!-- Expense Details -->
+    <section class="expense-detail" id="expenseDetail">
+      <div class="expense-detail__card">
+        <h2 class="expense-detail__type" id="expenseType">-</h2>
+
+        <div class="expense-detail__row">
+          <span class="expense-detail__label" data-i18n="expensePrice">מחיר</span>
+          <span class="expense-detail__value" id="expensePrice">-</span>
+        </div>
+
+        <div class="expense-detail__row" id="receiptRow">
+          <span class="expense-detail__label" data-i18n="expenseReceipt">קבלה</span>
+          <span class="expense-detail__value" id="expenseReceipt">-</span>
+        </div>
+
+        <div class="expense-detail__row" id="notesRow">
+          <span class="expense-detail__label" data-i18n="expenseNotes">הערות</span>
+          <span class="expense-detail__value" id="expenseNotes">-</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Language Selector -->
+    <section class="language-section">
+      <select class="language-dropdown" id="languageSelector">
+        <option value="he">עברית</option>
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+        <option value="uk">Українська</option>
+      </select>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Manzel &copy; 2025</p>
+  </footer>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/expense.js"></script>
+</body>
+</html>
