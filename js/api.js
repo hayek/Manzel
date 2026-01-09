@@ -239,34 +239,34 @@ const SheetsAPI = (function() {
 
   /**
    * Process residents data
-   * Columns: family name, first name, property owner
+   * Columns: apartment number, family name, first name, property owner
    * @param {Object} raw - Raw sheet data
-   * @returns {Object} Map of payment column name to resident info
+   * @returns {Object} Map of apartment number to resident info
    */
   function processResidents(raw) {
     const { rows } = raw;
     const residentsMap = {};
 
     rows.forEach(row => {
-      const familyName = row[0] ? String(row[0]).trim() : '';
-      const firstName = row[1] ? String(row[1]).trim() : '';
-      const propertyOwner = row[2] ? String(row[2]).trim() : '';
+      const aptNumber = row[0] ? String(row[0]).trim() : '';
+      const familyName = row[1] ? String(row[1]).trim() : '';
+      const firstName = row[2] ? String(row[2]).trim() : '';
+      const propertyOwner = row[3] ? String(row[3]).trim() : '';
 
-      // The key should match the payment column name
-      // Use family name as key if available, otherwise first name
-      const paymentKey = familyName || firstName;
-
-      if (paymentKey) {
-        residentsMap[paymentKey] = {
+      // Store by apartment number for later mapping
+      if (aptNumber) {
+        residentsMap[aptNumber] = {
+          aptNumber,
           familyName,
           firstName,
-          propertyOwner,
-          // Display name: use family name if available, otherwise first name
-          displayName: familyName || firstName
+          // Display name: prefer family name, fallback to first name
+          displayName: familyName || firstName,
+          propertyOwner
         };
       }
     });
 
+    console.log('Processed residents by apt:', residentsMap);
     return residentsMap;
   }
 
@@ -307,7 +307,14 @@ const SheetsAPI = (function() {
     const data = await fetchAllData();
     const residentPayments = data.payments.payments[residentName] || {};
     const years = data.payments.years || [];
-    const residentInfo = data.residents[residentName] || {};
+
+    // Find apartment number from resident name (payment column index + 1)
+    const paymentColumns = data.payments.residents || [];
+    const aptIndex = paymentColumns.indexOf(residentName);
+    const aptNumber = aptIndex >= 0 ? String(aptIndex + 1) : '';
+
+    // Look up resident info by apartment number
+    const residentInfo = data.residents[aptNumber] || {};
 
     // Calculate amount owed (unpaid months for current year up to current month)
     const now = new Date();
@@ -342,8 +349,17 @@ const SheetsAPI = (function() {
       }
     }
 
+    console.log('getResidentData lookup:', {
+      residentName,
+      aptIndex,
+      aptNumber,
+      matchedInfo: residentInfo
+    });
+
     return {
       name: residentName,
+      familyName: residentInfo.familyName || '',
+      firstName: residentInfo.firstName || '',
       payments: residentPayments, // { year: [12 months] }
       years,
       owed,

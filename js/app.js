@@ -96,8 +96,8 @@ const App = (function() {
     floor.apartments.forEach(aptNumber => {
       // Map apartment number to resident name (apt 1 = residents[0], etc.)
       const paymentKey = residents[aptNumber - 1] || '';
-      // Get display name from residents data, fallback to payment key
-      const residentInfo = residentsData[paymentKey] || {};
+      // Get display name from residents data (keyed by apartment number)
+      const residentInfo = residentsData[String(aptNumber)] || {};
       const displayName = residentInfo.displayName || paymentKey || `${I18n.t('apartment')} ${aptNumber}`;
       const apt = {
         name: paymentKey, // Keep original name for payment lookup

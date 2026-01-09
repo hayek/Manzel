@@ -43,6 +43,9 @@ const ResidentPage = (function() {
       // Fetch resident data
       residentData = await SheetsAPI.getResidentData(params.name);
 
+      // Update header with full name from Residents sheet
+      renderResidentName(residentData.familyName, residentData.firstName);
+
       // Render the page
       renderPropertyOwner(residentData.propertyOwner);
       renderOwedAmount(residentData.owed);
@@ -52,6 +55,21 @@ const ResidentPage = (function() {
     } catch (error) {
       console.error('Failed to load resident data:', error);
       showError();
+    }
+  }
+
+  /**
+   * Render resident name (family + first name)
+   * @param {string} familyName - Family name
+   * @param {string} firstName - First name
+   */
+  function renderResidentName(familyName, firstName) {
+    const nameEl = document.getElementById('residentName');
+
+    // Build full name: family name + first name
+    const parts = [familyName, firstName].filter(n => n && n.trim());
+    if (parts.length > 0) {
+      nameEl.textContent = parts.join(' ');
     }
   }
 
