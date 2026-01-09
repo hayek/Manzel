@@ -95,10 +95,12 @@ const ResidentPage = (function() {
   function renderOwedAmount(owed, payments) {
     const owedCard = document.getElementById('owedCard');
     const owedAmount = document.getElementById('owedAmount');
+    const owedCurrency = owedAmount.nextElementSibling;
 
     if (owed <= 0) {
       owedCard.classList.add('owed-card--paid');
       owedAmount.textContent = I18n.t('noDebt');
+      if (owedCurrency) owedCurrency.style.display = 'none';
     } else {
       owedAmount.textContent = formatNumber(owed);
 
