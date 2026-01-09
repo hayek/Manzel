@@ -51,6 +51,7 @@ const ModuleName = (function() {
 - `index.html` - Main dashboard with building visualization
 - `resident.html` - Individual resident payment history
 - `expense.html` - Expense details
+- `payment.html` - Payment methods and options (BIT, Paybox, cash)
 
 ## Data Source
 
@@ -83,6 +84,18 @@ Google Sheets API via Google Visualization API. Spreadsheet contains 4 sheets:
 - Cache key: `manzel_data_v3`
 - Force refresh available via `SheetsAPI.fetchData(true)`
 
+### Theming
+- Light/Dark/Auto theme support via `data-theme` attribute on `<html>`
+- Theme preference stored in `localStorage` (`manzel_theme`)
+- Auto mode respects system preference via `prefers-color-scheme`
+- Theme toggle component in footer with dropdown menu
+
+### UI Components
+- **Language Switcher** - Dropdown in header row with flag-style button and listbox menu
+- **Theme Toggle** - Footer component for light/dark/auto theme selection
+- Both use ARIA attributes (`aria-haspopup`, `aria-expanded`, `role="listbox"`)
+
 ### Accessibility
 - ARIA roles on interactive elements
 - `tabindex="0"` and keyboard handlers for custom clickable elements
+- Language and theme dropdowns with proper listbox semantics

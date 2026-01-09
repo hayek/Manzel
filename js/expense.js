@@ -51,22 +51,38 @@ const ExpensePage = (function() {
     document.getElementById('expensePrice').textContent = formatNumber(price) + ' ₪';
 
     // Receipt
-    const receiptRow = document.getElementById('receiptRow');
-    const receiptEl = document.getElementById('expenseReceipt');
+    const receiptContainer = document.getElementById('receiptContainer');
+    const receiptPreview = document.getElementById('receiptPreview');
     if (expense.receipt && expense.receipt !== 'null' && expense.receipt !== '') {
       if (expense.receipt.startsWith('http')) {
-        const link = document.createElement('a');
-        link.href = expense.receipt;
-        link.target = '_blank';
-        link.textContent = I18n.t('viewReceipt') || 'צפה בקבלה';
-        link.className = 'expense-detail__link';
-        receiptEl.innerHTML = '';
-        receiptEl.appendChild(link);
+        // Convert Google Drive URL to embeddable format
+        const imgUrl = convertToDirectImageUrl(expense.receipt);
+
+        // Create inline preview
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.alt = I18n.t('expenseReceipt') || 'קבלה';
+        img.className = 'expense-detail__receipt-img';
+        img.addEventListener('click', () => {
+          window.open(expense.receipt, '_blank');
+        });
+        // Fallback to link if image fails to load
+        img.addEventListener('error', () => {
+          receiptPreview.innerHTML = '';
+          const link = document.createElement('a');
+          link.href = expense.receipt;
+          link.target = '_blank';
+          link.textContent = I18n.t('viewReceipt') || 'צפה בקבלה';
+          link.className = 'expense-detail__link';
+          receiptPreview.appendChild(link);
+        });
+        receiptPreview.appendChild(img);
       } else {
-        receiptEl.textContent = expense.receipt;
+        // Plain text receipt
+        receiptPreview.textContent = expense.receipt;
       }
     } else {
-      receiptRow.style.display = 'none';
+      receiptContainer.style.display = 'none';
     }
 
     // Notes
@@ -77,6 +93,28 @@ const ExpensePage = (function() {
     } else {
       notesRow.style.display = 'none';
     }
+  }
+
+  /**
+   * Convert Google Drive sharing URL to direct image URL
+   * @param {string} url - Original URL
+   * @returns {string} Direct image URL
+   */
+  function convertToDirectImageUrl(url) {
+    // Google Drive file URL: https://drive.google.com/file/d/FILE_ID/view...
+    const driveFileMatch = url.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
+    if (driveFileMatch) {
+      return `https://drive.google.com/thumbnail?id=${driveFileMatch[1]}&sz=w1000`;
+    }
+
+    // Google Drive open URL: https://drive.google.com/open?id=FILE_ID
+    const driveOpenMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
+    if (driveOpenMatch) {
+      return `https://drive.google.com/thumbnail?id=${driveOpenMatch[1]}&sz=w1000`;
+    }
+
+    // Already a direct URL or other format
+    return url;
   }
 
   /**

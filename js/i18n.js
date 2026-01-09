@@ -6,6 +6,13 @@
 const I18n = (function() {
   const STORAGE_KEY = 'manzel_language';
   const RTL_LANGUAGES = ['he', 'ar'];
+  const LANG_CODES = {
+    he: 'HE',
+    en: 'EN',
+    ar: 'AR',
+    ru: 'RU',
+    uk: 'UK'
+  };
 
   const translations = {
     he: {
@@ -40,7 +47,10 @@ const I18n = (function() {
       paymentMonthly: 'בעל דירה מחוייב בתשלום 50 שקלים עבור כל חודש.',
       paymentDiscount: 'הנחה למשלמים מראש עבור כל השנה 550 שקל בלבד (במקום 600)',
       paymentMethods: 'לנוחיותכם ניתן לשלם באמצעות אחת הדרכים הבאות:',
-      paymentCash: 'מזומן'
+      paymentCash: 'מזומן',
+      themeLight: 'בהיר',
+      themeAuto: 'אוטו',
+      themeDark: 'כהה'
     },
     en: {
       buildingAddress: 'Derech Allenby 131A, Haifa',
@@ -74,7 +84,10 @@ const I18n = (function() {
       paymentMonthly: 'Apartment owners are required to pay 50 shekels per month.',
       paymentDiscount: 'Discount for paying in advance for the whole year: only 550 shekels (instead of 600)',
       paymentMethods: 'For your convenience, you can pay using one of the following methods:',
-      paymentCash: 'Cash'
+      paymentCash: 'Cash',
+      themeLight: 'Light',
+      themeAuto: 'Auto',
+      themeDark: 'Dark'
     },
     ar: {
       buildingAddress: 'شارع أللنبي 131أ، حيفا',
@@ -108,7 +121,10 @@ const I18n = (function() {
       paymentMonthly: 'يجب على صاحب الشقة دفع 50 شيكل عن كل شهر.',
       paymentDiscount: 'خصم للدفع المسبق للسنة كاملة: 550 شيكل فقط (بدلاً من 600)',
       paymentMethods: 'لراحتكم، يمكنكم الدفع بإحدى الطرق التالية:',
-      paymentCash: 'نقداً'
+      paymentCash: 'نقداً',
+      themeLight: 'فاتح',
+      themeAuto: 'تلقائي',
+      themeDark: 'داكن'
     },
     ru: {
       buildingAddress: 'Дерех Алленби 131А, Хайфа',
@@ -142,7 +158,10 @@ const I18n = (function() {
       paymentMonthly: 'Владелец квартиры обязан платить 50 шекелей в месяц.',
       paymentDiscount: 'Скидка при оплате вперёд за весь год: всего 550 шекелей (вместо 600)',
       paymentMethods: 'Для вашего удобства можно оплатить одним из следующих способов:',
-      paymentCash: 'Наличные'
+      paymentCash: 'Наличные',
+      themeLight: 'Светлая',
+      themeAuto: 'Авто',
+      themeDark: 'Тёмная'
     },
     uk: {
       buildingAddress: 'Дерех Алленбі 131А, Хайфа',
@@ -176,7 +195,10 @@ const I18n = (function() {
       paymentMonthly: 'Власник квартири зобов\'язаний сплачувати 50 шекелів щомісяця.',
       paymentDiscount: 'Знижка при оплаті наперед за весь рік: лише 550 шекелів (замість 600)',
       paymentMethods: 'Для вашої зручності можна оплатити одним із наступних способів:',
-      paymentCash: 'Готівка'
+      paymentCash: 'Готівка',
+      themeLight: 'Світла',
+      themeAuto: 'Авто',
+      themeDark: 'Темна'
     }
   };
 
@@ -260,13 +282,20 @@ const I18n = (function() {
   }
 
   /**
-   * Update language dropdown selection
+   * Update language switcher display
    */
   function updateLanguageDropdown() {
-    const dropdown = document.getElementById('languageSelector');
-    if (dropdown) {
-      dropdown.value = currentLanguage;
+    const langCode = document.getElementById('langCode');
+    if (langCode) {
+      langCode.textContent = LANG_CODES[currentLanguage] || 'HE';
     }
+
+    // Update selected state in menu
+    const menuItems = document.querySelectorAll('#langMenu li');
+    menuItems.forEach(item => {
+      const isSelected = item.getAttribute('data-lang') === currentLanguage;
+      item.setAttribute('aria-selected', isSelected);
+    });
   }
 
   /**
@@ -277,12 +306,46 @@ const I18n = (function() {
     const lang = detectLanguage();
     setLanguage(lang);
 
-    // Set up language dropdown event listener
-    const dropdown = document.getElementById('languageSelector');
-    if (dropdown) {
-      dropdown.value = currentLanguage;
-      dropdown.addEventListener('change', (e) => {
-        setLanguage(e.target.value);
+    // Set up language switcher
+    const switcher = document.getElementById('langSwitcher');
+    const btn = document.getElementById('langBtn');
+    const menu = document.getElementById('langMenu');
+
+    if (switcher && btn && menu) {
+      // Toggle dropdown on button click
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = switcher.classList.toggle('lang-switcher--open');
+        btn.setAttribute('aria-expanded', isOpen);
+      });
+
+      // Handle menu item selection
+      menu.addEventListener('click', (e) => {
+        const item = e.target.closest('li[data-lang]');
+        if (item) {
+          const lang = item.getAttribute('data-lang');
+          if (lang !== currentLanguage) {
+            localStorage.setItem(STORAGE_KEY, lang);
+            location.reload();
+          } else {
+            switcher.classList.remove('lang-switcher--open');
+            btn.setAttribute('aria-expanded', 'false');
+          }
+        }
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', () => {
+        switcher.classList.remove('lang-switcher--open');
+        btn.setAttribute('aria-expanded', 'false');
+      });
+
+      // Close dropdown on escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          switcher.classList.remove('lang-switcher--open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
       });
     }
   }

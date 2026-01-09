@@ -254,7 +254,7 @@ const SheetsAPI = (function() {
 
       if (apartments.length > 0) {
         floors.push({
-          number: rows.length - index, // Top floor first in sheet
+          number: rows.length - index - 1, // Top floor first in sheet, start from 0
           apartments: apartments
         });
       }
