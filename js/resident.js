@@ -48,8 +48,8 @@ const ResidentPage = (function() {
 
       // Render the page
       renderPropertyOwner(residentData.propertyOwner);
-      renderOwedAmount(residentData.owed);
-      renderLastYearOwed(residentData.lastYearOwed);
+      renderOwedAmount(residentData.owed, residentData.payments);
+      renderLastYearOwed(residentData.lastYearOwed, residentData.payments);
       renderPaymentHistory(residentData.payments, residentData.years);
 
     } catch (error) {
@@ -90,8 +90,9 @@ const ResidentPage = (function() {
   /**
    * Render the amount owed section
    * @param {number} owed - Amount owed
+   * @param {Object} payments - Payment history { year: [12 months] }
    */
-  function renderOwedAmount(owed) {
+  function renderOwedAmount(owed, payments) {
     const owedCard = document.getElementById('owedCard');
     const owedAmount = document.getElementById('owedAmount');
 
@@ -100,20 +101,68 @@ const ResidentPage = (function() {
       owedAmount.textContent = I18n.t('noDebt');
     } else {
       owedAmount.textContent = formatNumber(owed);
+
+      // Show unpaid months for current year
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth();
+      const yearPayments = payments[currentYear] || [];
+      const monthlyAmount = 50;
+
+      const unpaidMonths = [];
+      for (let i = 0; i < currentMonth; i++) {
+        const payment = yearPayments[i];
+        // 0 means discount (paid yearly), so skip it
+        if (!payment || payment.amount === null) {
+          unpaidMonths.push(I18n.getMonthName(i));
+        } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
+          unpaidMonths.push(I18n.getMonthName(i) + ' (' + I18n.t('partial') + ')');
+        }
+      }
+
+      if (unpaidMonths.length > 0) {
+        const monthsList = document.createElement('p');
+        monthsList.className = 'owed-card__months';
+        monthsList.textContent = unpaidMonths.join(', ');
+        owedCard.appendChild(monthsList);
+      }
     }
   }
 
   /**
    * Render the last year owed section
    * @param {number} lastYearOwed - Amount owed from last year
+   * @param {Object} payments - Payment history { year: [12 months] }
    */
-  function renderLastYearOwed(lastYearOwed) {
+  function renderLastYearOwed(lastYearOwed, payments) {
     const lastYearCard = document.getElementById('lastYearOwedCard');
     const lastYearAmount = document.getElementById('lastYearOwedAmount');
 
     if (lastYearOwed > 0) {
       lastYearCard.classList.remove('hidden');
       lastYearAmount.textContent = formatNumber(lastYearOwed);
+
+      // Show unpaid months for last year
+      const lastYear = new Date().getFullYear() - 1;
+      const yearPayments = payments[lastYear] || [];
+      const monthlyAmount = 50;
+
+      const unpaidMonths = [];
+      for (let i = 0; i < 12; i++) {
+        const payment = yearPayments[i];
+        // 0 means discount (paid yearly), so skip it
+        if (!payment || payment.amount === null) {
+          unpaidMonths.push(I18n.getMonthName(i));
+        } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
+          unpaidMonths.push(I18n.getMonthName(i) + ' (' + I18n.t('partial') + ')');
+        }
+      }
+
+      if (unpaidMonths.length > 0) {
+        const monthsList = document.createElement('p');
+        monthsList.className = 'owed-card__months';
+        monthsList.textContent = unpaidMonths.join(', ');
+        lastYearCard.appendChild(monthsList);
+      }
     }
   }
 
@@ -219,8 +268,9 @@ const ResidentPage = (function() {
         indicator.classList.add('payment-item__indicator--paid');
         statusText.textContent = `${I18n.t('paid')} (${payment.amount} ₪)`;
       } else if (payment && payment.amount === 0) {
-        indicator.classList.add('payment-item__indicator--zero');
-        statusText.textContent = `${I18n.t('partial')} (0 ₪)`;
+        indicator.classList.add('payment-item__indicator--discount');
+        indicator.textContent = '★';
+        statusText.textContent = I18n.t('discount');
       } else if (isFuture) {
         indicator.classList.add('payment-item__indicator--unpaid');
         statusText.textContent = '-';

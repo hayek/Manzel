@@ -326,11 +326,12 @@ const SheetsAPI = (function() {
     const currentYearPayments = residentPayments[currentYear] || [];
 
     // Debt is counted from the next month (e.g., Jan unpaid counts as debt starting Feb)
+    // 0 means discount (paid yearly), so don't count as debt
     for (let i = 0; i < currentMonth; i++) {
       const payment = currentYearPayments[i];
-      if (!payment || payment.amount === null || payment.amount === 0) {
+      if (!payment || payment.amount === null) {
         owed += monthlyAmount;
-      } else if (payment.amount < monthlyAmount) {
+      } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
         owed += monthlyAmount - payment.amount;
       }
     }
@@ -340,11 +341,12 @@ const SheetsAPI = (function() {
     let lastYearOwed = 0;
     const lastYearPayments = residentPayments[lastYear] || [];
 
+    // 0 means discount (paid yearly), so don't count as debt
     for (let i = 0; i < 12; i++) {
       const payment = lastYearPayments[i];
-      if (!payment || payment.amount === null || payment.amount === 0) {
+      if (!payment || payment.amount === null) {
         lastYearOwed += monthlyAmount;
-      } else if (payment.amount < monthlyAmount) {
+      } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
         lastYearOwed += monthlyAmount - payment.amount;
       }
     }

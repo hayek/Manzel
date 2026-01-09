@@ -401,7 +401,7 @@ body {
   opacity: 0.85;
 }
 
-.payment-box--zero {
+.payment-box--discount {
   background-color: var(--color-warning);
   opacity: 0.85;
 }
@@ -740,6 +740,13 @@ body {
   letter-spacing: -0.02em;
 }
 
+.owed-card__months {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  margin-top: var(--spacing-sm);
+  line-height: 1.5;
+}
+
 /* Payment History - clean list */
 .payment-history {
   background: var(--color-surface);
@@ -831,8 +838,14 @@ body {
   background: var(--color-success);
 }
 
-.payment-item__indicator--zero {
-  background: var(--color-warning);
+.payment-item__indicator--discount {
+  background: transparent;
+  color: var(--color-warning);
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .payment-item__indicator--unpaid {
