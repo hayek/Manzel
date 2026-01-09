@@ -14,6 +14,32 @@ const I18n = (function() {
     uk: 'UK'
   };
 
+  // Expense type translations (Hebrew key -> translations)
+  // These are the actual expense types from the Google Sheets data
+  const expenseTypes = {
+    // Utilities
+    'חשמל': { en: 'Electricity', ar: 'كهرباء', ru: 'Электричество', uk: 'Електрика' },
+    // Cleaning
+    'מנקה': { en: 'Cleaner', ar: 'عامل نظافة', ru: 'Уборщик', uk: 'Прибиральник' },
+    'ניקוי חצר': { en: 'Courtyard Cleaning', ar: 'تنظيف الفناء', ru: 'Уборка двора', uk: 'Прибирання подвір\'я' },
+    'חומר ניקוי רצפה': { en: 'Floor Cleaning Materials', ar: 'مواد تنظيف الأرضية', ru: 'Средства для мытья пола', uk: 'Засоби для миття підлоги' },
+    'ציוד לניקוי חצר בניין': { en: 'Building Courtyard Cleaning Equipment', ar: 'معدات تنظيف فناء المبنى', ru: 'Оборудование для уборки двора', uk: 'Обладнання для прибирання подвір\'я' },
+    // Repairs
+    'תיקון ביוב': { en: 'Sewage Repair', ar: 'إصلاح الصرف الصحي', ru: 'Ремонт канализации', uk: 'Ремонт каналізації' },
+    'החלפת כפתורי חדר מדרגות 2x': { en: 'Stairwell Button Replacement (2x)', ar: 'استبدال أزرار بئر الدرج (2x)', ru: 'Замена кнопок лестничной клетки (2x)', uk: 'Заміна кнопок сходової клітки (2x)' },
+    'מפסק תאורה מדרגות': { en: 'Stairwell Light Switch', ar: 'مفتاح إضاءة الدرج', ru: 'Выключатель света на лестнице', uk: 'Вимикач світла на сходах' },
+    // Roof
+    'זפת לגג': { en: 'Tar for Roof', ar: 'قطران للسقف', ru: 'Гудрон для крыши', uk: 'Гудрон для даху' },
+    // Keys
+    'שכפול מפתחות גג ומרתף': { en: 'Key Duplication - Roof & Basement', ar: 'نسخ مفاتيح السطح والقبو', ru: 'Копирование ключей - крыша и подвал', uk: 'Копіювання ключів - дах і підвал' },
+    'מפתחות מקלט': { en: 'Shelter Keys', ar: 'مفاتيح الملجأ', ru: 'Ключи от убежища', uk: 'Ключі від сховища' },
+    // Financial/Administrative
+    'שארית קופה 2022': { en: 'Fund Remainder 2022', ar: 'رصيد الصندوق 2022', ru: 'Остаток кассы 2022', uk: 'Залишок каси 2022' },
+    'חוב 2022 מירב': { en: 'Debt 2022 - Mirav', ar: 'دين 2022 - ميراف', ru: 'Долг 2022 - Мирав', uk: 'Борг 2022 - Мірав' },
+    'חוב 2022 גבי': { en: 'Debt 2022 - Gabi', ar: 'دين 2022 - غابي', ru: 'Долг 2022 - Габи', uk: 'Борг 2022 - Габі' },
+    'תשלום חוב 2022 מירב': { en: 'Debt Payment 2022 - Mirav', ar: 'دفعة دين 2022 - ميراف', ru: 'Оплата долга 2022 - Мирав', uk: 'Оплата боргу 2022 - Мірав' }
+  };
+
   const translations = {
     he: {
       buildingAddress: 'דרך אלנבי 131א, חיפה',
@@ -376,6 +402,22 @@ const I18n = (function() {
     return RTL_LANGUAGES.includes(currentLanguage);
   }
 
+  /**
+   * Translate expense type from Hebrew to current language
+   * @param {string} hebrewType - Hebrew expense type
+   * @returns {string} Translated expense type or original if no translation
+   */
+  function translateExpenseType(hebrewType) {
+    if (currentLanguage === 'he') {
+      return hebrewType;
+    }
+    const translation = expenseTypes[hebrewType];
+    if (translation && translation[currentLanguage]) {
+      return translation[currentLanguage];
+    }
+    return hebrewType; // Fallback to original Hebrew
+  }
+
   // Public API
   return {
     init,
@@ -383,7 +425,8 @@ const I18n = (function() {
     t,
     getMonthName,
     getCurrentLanguage,
-    isRTL
+    isRTL,
+    translateExpenseType
   };
 })();
 

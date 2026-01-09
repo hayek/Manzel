@@ -44,7 +44,7 @@ const ExpensePage = (function() {
    */
   function renderExpenseDetails(expense) {
     // Type
-    document.getElementById('expenseType').textContent = expense.type;
+    document.getElementById('expenseType').textContent = I18n.translateExpenseType(expense.type);
 
     // Price
     const price = parseFloat(expense.price) || 0;

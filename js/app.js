@@ -282,7 +282,7 @@ const App = (function() {
       const row = document.createElement('tr');
 
       const typeCell = document.createElement('td');
-      typeCell.textContent = expense.type;
+      typeCell.textContent = I18n.translateExpenseType(expense.type);
 
       const priceCell = document.createElement('td');
       priceCell.textContent = formatNumber(expense.price) + ' ₪';

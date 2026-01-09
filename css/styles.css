@@ -607,7 +607,7 @@ body {
 .lang-switcher__menu {
   position: absolute;
   top: calc(100% + var(--spacing-xs));
-  left: 0;
+  right: 0;
   min-width: 140px;
   background: var(--color-surface);
   border-radius: var(--radius-md);
@@ -621,8 +621,8 @@ body {
 }
 
 [dir="rtl"] .lang-switcher__menu {
-  left: auto;
-  right: 0;
+  right: auto;
+  left: 0;
 }
 
 .lang-switcher--open .lang-switcher__menu {
