@@ -360,10 +360,10 @@ const ResidentPage = (function() {
     lines.push(I18n.t('debtMessageIntro'));
     lines.push('');
 
-    // Current year debt
+    // Current year debt (include current month)
     if (residentData.owed > 0) {
       const yearPayments = residentData.payments[currentYear] || [];
-      const unpaidMonths = getUnpaidMonthsList(yearPayments, currentMonth);
+      const unpaidMonths = getUnpaidMonthsList(yearPayments, currentMonth + 1);
 
       let currentYearLine = I18n.t('debtMessageCurrentYear')
         .replace('{amount}', formatNumber(residentData.owed))
