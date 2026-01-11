@@ -55,11 +55,12 @@ const ModuleName = (function() {
 
 ## Data Source
 
-Google Sheets API via Google Visualization API. Spreadsheet contains 4 sheets:
+Google Sheets API via Google Visualization API. Spreadsheet contains 5 sheets:
 - `Payments` - Resident payment records by month/year
 - `total` - Total maintenance fund amount
 - `Expence` - Building expenses (note: typo is intentional, matches source)
 - `building` - Floor/apartment layout
+- `Residents` - Apartment details: apartment number, family name, first name, property owner, phone
 
 ## Key Conventions
 
@@ -81,8 +82,8 @@ Google Sheets API via Google Visualization API. Spreadsheet contains 4 sheets:
 
 ### Caching
 - Session storage with 5-minute TTL
-- Cache key: `manzel_data_v3`
-- Force refresh available via `SheetsAPI.fetchData(true)`
+- Cache key: `manzel_data_v4`
+- Force refresh available via `SheetsAPI.fetchAllData(true)`
 
 ### Theming
 - Light/Dark/Auto theme support via `data-theme` attribute on `<html>`
@@ -99,3 +100,9 @@ Google Sheets API via Google Visualization API. Spreadsheet contains 4 sheets:
 - ARIA roles on interactive elements
 - `tabindex="0"` and keyboard handlers for custom clickable elements
 - Language and theme dropdowns with proper listbox semantics
+
+### Admin Mode
+- Hidden admin mode enabled via browser console: `localStorage.setItem('manzel_admin', 'true')`
+- Shows action buttons on resident page when debt exists:
+  - Copy debt message (localized, includes unpaid months and link)
+  - Send via WhatsApp (uses phone from Residents sheet)
