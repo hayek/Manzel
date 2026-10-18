@@ -155,13 +155,44 @@ const App = (function() {
 
     const dots = el('div', 'apt-dots');
     Object.keys(summary.apartments).forEach(apt => {
-      const dot = el('span', `apt-dot apt-dot--${summary.apartments[apt].status}`, apt);
-      dot.title = `${I18n.t('apartment')} ${apt}`;
+      const status = summary.apartments[apt];
+      const dot = el('span', `apt-dot apt-dot--${status.status}`, apt);
+      const details = describeAptPayment(Number(apt), status);
+      dot.dataset.tip = details.join('\n');
+      dot.setAttribute('aria-label', details.join(' · '));
       dots.appendChild(dot);
     });
     card.appendChild(dots);
 
     return card;
+  }
+
+  /**
+   * Describe one apartment's project payments for the dot tooltip
+   * @param {number} apt - Apartment number
+   * @param {Object} status - Entry from summary.apartments
+   * @returns {Array<string>} Tooltip lines
+   */
+  function describeAptPayment(apt, status) {
+    const methodKeys = { cash: 'methodCash', bit: 'methodBit', paybox: 'methodPaybox' };
+    const info = appData.residents[String(apt)] || {};
+    const name = info.displayName || appData.payments.residents[apt - 1] || '';
+    const lines = [[name, `${I18n.t('apartment')} ${apt}`].filter(Boolean).join(' · ')];
+
+    status.payments.forEach(payment => {
+      lines.push([payment.date, `${formatNumber(payment.amount)} ₪`, I18n.t(methodKeys[payment.method])]
+        .filter(Boolean)
+        .join(' · '));
+    });
+
+    if (status.status === 'paid') {
+      lines.push(I18n.t('paid'));
+    } else if (status.status === 'partial') {
+      lines.push(I18n.t('remaining').replace('{amount}', formatNumber(status.remaining)));
+    } else {
+      lines.push(I18n.t('notPaid'));
+    }
+    return lines;
   }
 
   /**
