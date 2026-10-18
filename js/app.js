@@ -6,7 +6,7 @@
 const App = (function() {
   let appData = null;
   let expensesPage = 1;
-  const EXPENSES_PER_PAGE = 10;
+  const MONTHS_PER_PAGE = 6;
 
   /**
    * Initialize the application
@@ -431,8 +431,8 @@ const App = (function() {
   }
 
   /**
-   * Render expenses table with pagination
-   * @param {Array} expenses - Expenses data
+   * Render expenses grouped by month, with pagination
+   * @param {Array} expenses - Expenses data (newest first)
    */
   function renderExpenses(expenses) {
     const loading = document.getElementById('expensesLoading');
@@ -448,56 +448,104 @@ const App = (function() {
       return;
     }
 
-    renderExpensesPage(expenses, expensesPage);
-    renderPagination(expenses);
+    // groupByMonth expects sheet order (oldest first)
+    const months = Expenses.groupByMonth([...expenses].reverse());
+    renderExpensesPage(months, expensesPage);
+    renderPagination(months);
   }
 
   /**
-   * Render a specific page of expenses
-   * @param {Array} expenses - All expenses
+   * Render a page of months
+   * @param {Array} months - Result of Expenses.groupByMonth()
    * @param {number} page - Page number (1-based)
    */
-  function renderExpensesPage(expenses, page) {
+  function renderExpensesPage(months, page) {
     const list = document.getElementById('expensesBody');
     list.innerHTML = '';
 
-    const start = (page - 1) * EXPENSES_PER_PAGE;
-    const end = start + EXPENSES_PER_PAGE;
-    const pageExpenses = expenses.slice(start, end);
-
-    pageExpenses.forEach(expense => {
-      const item = el('li', 'expense-item');
-      item.setAttribute('role', 'button');
-      item.setAttribute('tabindex', '0');
-
-      item.appendChild(el('span', 'expense-item__icon', getExpenseIcon(expense.type)));
-
-      const body = el('span', 'expense-item__body');
-      body.appendChild(el('span', 'expense-item__type', I18n.translateExpenseType(expense.type)));
-      if (expense.notes) {
-        body.appendChild(el('span', 'expense-item__notes', String(expense.notes).trim()));
-      }
-      item.appendChild(body);
-
-      const amountClass = expense.price > 0 ? 'expense-item__amount expense-item__amount--income' : 'expense-item__amount';
-      const amount = el('span', amountClass, formatNumber(expense.price) + ' ₪');
-      amount.setAttribute('dir', 'ltr');
-      item.appendChild(amount);
-
-      // Click handler to navigate to expense detail
-      item.addEventListener('click', () => {
-        navigateToExpense(expense);
-      });
-
-      item.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          navigateToExpense(expense);
-        }
-      });
-
-      list.appendChild(item);
+    const start = (page - 1) * MONTHS_PER_PAGE;
+    months.slice(start, start + MONTHS_PER_PAGE).forEach((month, index) => {
+      list.appendChild(createExpenseMonth(month, page === 1 && index === 0));
     });
+  }
+
+  /**
+   * Create a month group: title, total and per-type summary; expands to the expenses
+   * @param {Object} month - { year, month, total, types, items }
+   * @param {boolean} open - Start expanded
+   * @returns {HTMLElement} List item
+   */
+  function createExpenseMonth(month, open) {
+    const item = el('li', 'expense-month');
+    const details = el('details');
+    details.open = open;
+
+    const summary = el('summary', 'expense-month__summary');
+    const header = el('div', 'expense-month__header');
+    const title = month.year === null ? '-' : `${I18n.getMonthName(month.month)} ${month.year}`;
+    header.appendChild(el('span', 'expense-month__title', title));
+    const total = el('span', `expense-month__total${month.total > 0 ? ' expense-item__amount--income' : ''}`, `${formatNumber(month.total)} ₪`);
+    total.setAttribute('dir', 'ltr');
+    header.appendChild(total);
+    summary.appendChild(header);
+
+    const types = el('div', 'expense-month__types');
+    month.types.forEach(type => {
+      const count = type.count > 1 ? ` ×${type.count}` : '';
+      const chip = el('span', 'expense-chip', `${getExpenseIcon(type.type)} ${I18n.translateExpenseType(type.type)}${count}`);
+      const amount = el('span', 'expense-chip__amount', `${formatNumber(type.total)} ₪`);
+      amount.setAttribute('dir', 'ltr');
+      chip.appendChild(amount);
+      types.appendChild(chip);
+    });
+    summary.appendChild(types);
+    details.appendChild(summary);
+
+    const items = el('ul', 'expense-list');
+    month.items.forEach(expense => items.appendChild(createExpenseItem(expense)));
+    details.appendChild(items);
+
+    item.appendChild(details);
+    return item;
+  }
+
+  /**
+   * Create one expense row (links to the expense page)
+   * @param {Object} expense - Expense data
+   * @returns {HTMLElement} List item
+   */
+  function createExpenseItem(expense) {
+    const item = el('li', 'expense-item');
+    item.setAttribute('role', 'button');
+    item.setAttribute('tabindex', '0');
+
+    item.appendChild(el('span', 'expense-item__icon', getExpenseIcon(expense.type)));
+
+    const body = el('span', 'expense-item__body');
+    body.appendChild(el('span', 'expense-item__type', I18n.translateExpenseType(expense.type)));
+    if (expense.notes) {
+      body.appendChild(el('span', 'expense-item__notes', String(expense.notes).trim()));
+    }
+    item.appendChild(body);
+
+    const amountClass = expense.price > 0 ? 'expense-item__amount expense-item__amount--income' : 'expense-item__amount';
+    const amount = el('span', amountClass, formatNumber(expense.price) + ' ₪');
+    amount.setAttribute('dir', 'ltr');
+    item.appendChild(amount);
+
+    // Click handler to navigate to expense detail
+    item.addEventListener('click', () => {
+      navigateToExpense(expense);
+    });
+
+    item.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        navigateToExpense(expense);
+      }
+    });
+
+    return item;
   }
 
   /**
@@ -514,13 +562,13 @@ const App = (function() {
 
   /**
    * Render pagination controls
-   * @param {Array} expenses - All expenses
+   * @param {Array} months - All month groups
    */
-  function renderPagination(expenses) {
+  function renderPagination(months) {
     const pagination = document.getElementById('expensesPagination');
     pagination.innerHTML = '';
 
-    const totalPages = Math.ceil(expenses.length / EXPENSES_PER_PAGE);
+    const totalPages = Math.ceil(months.length / MONTHS_PER_PAGE);
     if (totalPages <= 1) return;
 
     // Previous button
@@ -531,8 +579,8 @@ const App = (function() {
     prevBtn.addEventListener('click', () => {
       if (expensesPage > 1) {
         expensesPage--;
-        renderExpensesPage(expenses, expensesPage);
-        renderPagination(expenses);
+        renderExpensesPage(months, expensesPage);
+        renderPagination(months);
       }
     });
     pagination.appendChild(prevBtn);
@@ -551,8 +599,8 @@ const App = (function() {
     nextBtn.addEventListener('click', () => {
       if (expensesPage < totalPages) {
         expensesPage++;
-        renderExpensesPage(expenses, expensesPage);
-        renderPagination(expenses);
+        renderExpensesPage(months, expensesPage);
+        renderPagination(months);
       }
     });
     pagination.appendChild(nextBtn);
