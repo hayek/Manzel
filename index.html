@@ -27,24 +27,57 @@
       </div>
     </div>
 
+    <!-- Announcement (from the Announcement sheet) -->
+    <div class="announcement hidden" id="announcement" role="note">
+      <span class="announcement__icon" aria-hidden="true">📢</span>
+      <span id="announcementText" dir="auto"></span>
+    </div>
+
     <!-- Total Fund -->
     <section class="total-card" id="totalCard">
       <p class="total-card__label" data-i18n="totalFund">קופת ועד בית</p>
-      <div class="loading" id="totalLoading">
-        <div class="loading__spinner"></div>
+      <div class="skeleton-group" id="totalLoading">
+        <div class="skeleton skeleton--total"></div>
       </div>
       <p class="total-card__amount hidden" id="totalAmount">
         <span id="totalValue">0</span>
         <span class="total-card__currency" data-i18n="currency">₪</span>
       </p>
+      <div class="month-progress hidden" id="monthProgress">
+        <p class="month-progress__label" id="monthProgressLabel"></p>
+        <div class="progress progress--small">
+          <div class="progress__fill" id="monthProgressFill"></div>
+        </div>
+      </div>
       <a href="payment.html" class="pay-btn" data-i18n="payNow">לתשלום</a>
+    </section>
+
+    <!-- Projects -->
+    <section class="projects-section hidden" id="projectsSection">
+      <h2 class="section-title" data-i18n="projects">פרויקטים</h2>
+      <div class="projects-list" id="projectsList">
+        <!-- Project cards will be rendered here by JavaScript -->
+      </div>
+      <div class="completed-projects hidden" id="completedProjects">
+        <h3 class="completed-projects__title" data-i18n="completedProjects">פרויקטים שהושלמו</h3>
+        <div id="completedProjectsList"></div>
+      </div>
     </section>
 
     <!-- Building Layout -->
     <section class="building-section">
-      <h2 class="section-title" data-i18n="building">הבניין</h2>
-      <div class="loading" id="buildingLoading">
-        <div class="loading__spinner"></div>
+      <h2 class="section-title"><span data-i18n="building">הבניין</span> <span id="buildingYear"></span></h2>
+      <div class="legend hidden" id="buildingLegend">
+        <span class="legend__item legend__item--paid" data-i18n="paid">שולם</span>
+        <span class="legend__item legend__item--discount" data-i18n="discount">הנחה</span>
+        <span class="legend__item legend__item--unpaid" data-i18n="notPaid">לא שולם</span>
+        <span class="legend__item legend__item--future" data-i18n="future">עתידי</span>
+      </div>
+      <div class="skeleton-group skeleton-building" id="buildingLoading">
+        <div class="skeleton skeleton--apartment"></div>
+        <div class="skeleton skeleton--apartment"></div>
+        <div class="skeleton skeleton--apartment"></div>
+        <div class="skeleton skeleton--apartment"></div>
       </div>
       <div class="building hidden" id="buildingGrid">
         <!-- Floors will be rendered here by JavaScript -->
@@ -54,22 +87,15 @@
     <!-- Expenses -->
     <section class="expenses-section">
       <h2 class="section-title" data-i18n="expenses">הוצאות</h2>
-      <div class="loading" id="expensesLoading">
-        <div class="loading__spinner"></div>
+      <div class="skeleton-group skeleton-list" id="expensesLoading">
+        <div class="skeleton skeleton--row"></div>
+        <div class="skeleton skeleton--row"></div>
+        <div class="skeleton skeleton--row"></div>
       </div>
-      <div class="expenses-table hidden" id="expensesTable">
-        <table>
-          <thead>
-            <tr>
-              <th data-i18n="expenseType">סוג</th>
-              <th data-i18n="expensePrice">מחיר</th>
-              <th data-i18n="expenseNotes">הערות</th>
-            </tr>
-          </thead>
-          <tbody id="expensesBody">
-            <!-- Expenses will be rendered here by JavaScript -->
-          </tbody>
-        </table>
+      <div class="expenses-card hidden" id="expensesTable">
+        <ul class="expense-list" id="expensesBody">
+          <!-- Expenses will be rendered here by JavaScript -->
+        </ul>
         <div class="pagination" id="expensesPagination">
           <!-- Pagination controls will be rendered here -->
         </div>
@@ -104,6 +130,7 @@
   </footer>
 
   <script src="js/i18n.js"></script>
+  <script src="js/projects.js"></script>
   <script src="js/api.js"></script>
   <script src="js/app.js"></script>
   <script>

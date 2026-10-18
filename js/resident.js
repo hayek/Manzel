@@ -50,6 +50,7 @@ const ResidentPage = (function() {
       renderPropertyOwner(residentData.propertyOwner);
       renderOwedAmount(residentData.owed, residentData.payments);
       renderLastYearOwed(residentData.lastYearOwed, residentData.payments);
+      renderProjects(residentData.projects);
       renderPaymentHistory(residentData.payments, residentData.years);
 
       // Set up action buttons for debt message (copy and WhatsApp)
@@ -184,6 +185,69 @@ const ResidentPage = (function() {
         lastYearCard.appendChild(monthsList);
       }
     }
+  }
+
+  /**
+   * Render this apartment's status for each project
+   * @param {Array} projects - Entries from getResidentData().projects
+   */
+  function renderProjects(projects) {
+    if (!projects || projects.length === 0) return;
+
+    const methodKeys = { cash: 'methodCash', bit: 'methodBit', paybox: 'methodPaybox' };
+    const list = document.getElementById('residentProjectsList');
+    list.innerHTML = '';
+
+    projects.forEach(entry => {
+      const card = document.createElement('a');
+      card.className = 'project-apartment project-apartment--link';
+      card.href = `project.html?${new URLSearchParams({ id: entry.project.id }).toString()}`;
+
+      const header = document.createElement('div');
+      header.className = 'project-apartment__header';
+
+      const name = document.createElement('span');
+      name.className = 'project-apartment__name';
+      name.setAttribute('dir', 'auto');
+      name.textContent = entry.project.name;
+      header.appendChild(name);
+
+      const badge = document.createElement('span');
+      if (entry.status === 'paid') {
+        badge.className = 'badge badge--paid';
+        badge.textContent = I18n.t('paid');
+      } else {
+        badge.className = `badge badge--${entry.status}`;
+        badge.textContent = I18n.t('remaining').replace('{amount}', formatNumber(entry.remaining));
+      }
+      header.appendChild(badge);
+      card.appendChild(header);
+
+      if (entry.payments.length > 0) {
+        const payments = document.createElement('ul');
+        payments.className = 'project-apartment__payments';
+        entry.payments.forEach(payment => {
+          const item = document.createElement('li');
+          item.textContent = [payment.date, `${formatNumber(payment.amount)} ₪`, I18n.t(methodKeys[payment.method])]
+            .filter(Boolean)
+            .join(' · ');
+          payments.appendChild(item);
+        });
+        card.appendChild(payments);
+      }
+
+      list.appendChild(card);
+    });
+
+    document.getElementById('residentProjects').classList.remove('hidden');
+  }
+
+  /**
+   * Get the projects this resident still owes money for
+   * @returns {Array} Project entries with remaining > 0
+   */
+  function getOwedProjects() {
+    return (residentData.projects || []).filter(entry => entry.remaining > 0);
   }
 
   /**
@@ -395,6 +459,17 @@ const ResidentPage = (function() {
       }
     }
 
+    // Project dues
+    const owedProjects = getOwedProjects();
+    if (owedProjects.length > 0) {
+      if (lines[lines.length - 1] !== '') lines.push('');
+      owedProjects.forEach(entry => {
+        lines.push(I18n.t('debtMessageProject')
+          .replace('{name}', entry.project.name)
+          .replace('{amount}', formatNumber(entry.remaining)));
+      });
+    }
+
     // Link to resident page
     const params = getUrlParams();
     const residentUrl = `https://hayek.github.io/Manzel/resident.html?name=${encodeURIComponent(params.name)}&apt=${encodeURIComponent(params.apt || '')}`;
@@ -481,7 +556,7 @@ const ResidentPage = (function() {
     const whatsappBtn = document.getElementById('whatsappBtn');
 
     // Hide all buttons if there's no debt
-    if (residentData.owed <= 0 && residentData.lastYearOwed <= 0) {
+    if (residentData.owed <= 0 && residentData.lastYearOwed <= 0 && getOwedProjects().length === 0) {
       return;
     }
 
