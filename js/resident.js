@@ -544,7 +544,7 @@ const ResidentPage = (function() {
    * @returns {boolean} True if admin mode is enabled
    */
   function isAdminMode() {
-    return localStorage.getItem('manzel_admin') === 'true';
+    return AdminAPI.isLoggedIn();
   }
 
   /**
