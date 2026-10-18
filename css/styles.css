@@ -2143,4 +2143,97 @@ body {
 .method-picker label:has(input:checked) {
   border-color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+
+/* Expenses grouped by month */
+.expense-month {
+  list-style: none;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.expense-month:last-child {
+  border-bottom: none;
+}
+
+.expense-month__summary {
+  list-style: none;
+  cursor: pointer;
+  padding: var(--spacing-md);
+  transition: background var(--transition-fast);
+}
+
+.expense-month__summary::-webkit-details-marker {
+  display: none;
+}
+
+.expense-month__summary:hover {
+  background: var(--color-gray-50);
+}
+
+.expense-month__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.expense-month__title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.expense-month__title::before {
+  content: '▸';
+  display: inline-block;
+  margin-inline-end: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  transition: transform var(--transition-fast);
+}
+
+[dir="rtl"] .expense-month__title::before {
+  content: '◂';
+}
+
+details[open] > .expense-month__summary .expense-month__title::before {
+  transform: rotate(90deg);
+}
+
+[dir="rtl"] details[open] > .expense-month__summary .expense-month__title::before {
+  transform: rotate(-90deg);
+}
+
+.expense-month__total {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.expense-month__types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.expense-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-secondary);
+  font-size: 0.75rem;
+}
+
+.expense-chip__amount {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.expense-month .expense-list {
+  border-top: 1px solid var(--color-gray-100);
+  background: var(--color-gray-50);
+}
+
+.expense-month .expense-item {
+  padding-inline-start: var(--spacing-lg);
 }
