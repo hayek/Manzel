@@ -17,7 +17,10 @@ const App = (function() {
       appData = await SheetsAPI.fetchAllData();
 
       // Render all sections
+      renderAnnouncement(appData.announcement);
       renderTotal(appData.total);
+      renderMonthProgress(appData.building, appData.payments);
+      renderProjects(appData.projects, appData.projectPayments, appData.building);
       renderBuilding(appData.building, appData.payments, appData.residents);
       renderExpenses(appData.expenses);
 
@@ -25,6 +28,164 @@ const App = (function() {
       console.error('Failed to initialize app:', error);
       showError();
     }
+  }
+
+  /**
+   * Create a DOM element with optional class and text
+   * @param {string} tag - Tag name
+   * @param {string} [className] - CSS class(es)
+   * @param {string} [text] - Text content
+   * @returns {HTMLElement} Element
+   */
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  /**
+   * Get all apartment numbers in the building, ascending
+   * @param {Array} floors - Building floors data
+   * @returns {Array<number>} Apartment numbers
+   */
+  function getAptNumbers(floors) {
+    return floors.flatMap(floor => floor.apartments).sort((a, b) => a - b);
+  }
+
+  /**
+   * Render the announcement strip (hidden when empty)
+   * @param {string} text - Announcement text
+   */
+  function renderAnnouncement(text) {
+    if (!text) return;
+    document.getElementById('announcementText').textContent = text;
+    document.getElementById('announcement').classList.remove('hidden');
+  }
+
+  /**
+   * Render how many apartments paid for the current month
+   * @param {Array} floors - Building floors data
+   * @param {Object} paymentsData - Payments data
+   */
+  function renderMonthProgress(floors, paymentsData) {
+    const now = new Date();
+    const apts = getAptNumbers(floors);
+    if (apts.length === 0) return;
+
+    // 0 means discount (paid yearly), so it counts as paid
+    const count = apts.filter(apt => {
+      const name = paymentsData.residents[apt - 1];
+      const payment = ((paymentsData.payments[name] || {})[now.getFullYear()] || [])[now.getMonth()];
+      return payment && payment.amount !== null && !Number.isNaN(payment.amount);
+    }).length;
+
+    document.getElementById('monthProgressLabel').textContent = I18n.t('paidThisMonth')
+      .replace('{count}', count)
+      .replace('{total}', apts.length);
+    document.getElementById('monthProgressFill').style.width = `${(count / apts.length) * 100}%`;
+    document.getElementById('monthProgress').classList.remove('hidden');
+  }
+
+  /**
+   * Render the projects section
+   * @param {Array} projects - Projects from the Projects sheet
+   * @param {Array} payments - Payments from the ProjectPayments sheet
+   * @param {Array} floors - Building floors data
+   */
+  function renderProjects(projects, payments, floors) {
+    if (!projects || projects.length === 0) return;
+
+    const apts = getAptNumbers(floors);
+    const list = document.getElementById('projectsList');
+    list.innerHTML = '';
+
+    projects
+      .filter(project => project.status === 'open')
+      .forEach(project => list.appendChild(createProjectCard(Projects.summarize(project, payments, apts))));
+
+    const done = projects.filter(project => project.status === 'done');
+    if (done.length > 0) {
+      const doneList = document.getElementById('completedProjectsList');
+      doneList.innerHTML = '';
+      done.forEach(project => {
+        const link = el('a', 'completed-projects__item', project.name);
+        link.setAttribute('dir', 'auto');
+        link.href = projectUrl(project.id);
+        doneList.appendChild(link);
+      });
+      document.getElementById('completedProjects').classList.remove('hidden');
+    }
+
+    document.getElementById('projectsSection').classList.remove('hidden');
+  }
+
+  /**
+   * Build the link to a project page
+   * @param {string} id - Project id
+   * @returns {string} URL
+   */
+  function projectUrl(id) {
+    return `project.html?${new URLSearchParams({ id }).toString()}`;
+  }
+
+  /**
+   * Create a project card
+   * @param {Object} summary - Result of Projects.summarize()
+   * @returns {HTMLElement} Card element (a link to the project page)
+   */
+  function createProjectCard(summary) {
+    const { project } = summary;
+    const card = el('a', 'project-card');
+    card.href = projectUrl(project.id);
+
+    const header = el('div', 'project-card__header');
+    const name = el('span', 'project-card__name', project.name);
+    name.setAttribute('dir', 'auto');
+    header.appendChild(name);
+    const due = el('span', 'project-card__due');
+    if (project.dueDate) {
+      due.textContent = I18n.t('projectDue').replace('{date}', project.dueDate);
+    }
+    if (Projects.isOverdue(summary, new Date())) {
+      due.appendChild(el('span', 'badge badge--overdue', I18n.t('overdue')));
+    }
+    header.appendChild(due);
+    card.appendChild(header);
+
+    card.appendChild(createProgressBar(summary.goal ? summary.collected / summary.goal : 0));
+
+    const meta = el('div', 'project-card__meta');
+    meta.appendChild(el('span', '', I18n.t('projectCollected')
+      .replace('{collected}', formatNumber(summary.collected))
+      .replace('{goal}', formatNumber(summary.goal))));
+    meta.appendChild(el('span', '', I18n.t('projectApartments')
+      .replace('{paid}', summary.paidCount)
+      .replace('{total}', summary.aptCount)));
+    card.appendChild(meta);
+
+    const dots = el('div', 'apt-dots');
+    Object.keys(summary.apartments).forEach(apt => {
+      const dot = el('span', `apt-dot apt-dot--${summary.apartments[apt].status}`, apt);
+      dot.title = `${I18n.t('apartment')} ${apt}`;
+      dots.appendChild(dot);
+    });
+    card.appendChild(dots);
+
+    return card;
+  }
+
+  /**
+   * Create a progress bar
+   * @param {number} ratio - Filled fraction (0-1)
+   * @returns {HTMLElement} Progress bar element
+   */
+  function createProgressBar(ratio) {
+    const bar = el('div', 'progress');
+    const fill = el('div', 'progress__fill progress__fill--success');
+    fill.style.width = `${Math.min(1, Math.max(0, ratio)) * 100}%`;
+    bar.appendChild(fill);
+    return bar;
   }
 
   /**
@@ -53,6 +214,8 @@ const App = (function() {
 
     loading.classList.add('hidden');
     grid.classList.remove('hidden');
+    document.getElementById('buildingLegend').classList.remove('hidden');
+    document.getElementById('buildingYear').textContent = `· ${new Date().getFullYear()}`;
 
     // Clear existing content
     grid.innerHTML = '';
@@ -195,6 +358,10 @@ const App = (function() {
         box.classList.add('payment-box--unpaid');
       }
 
+      if (i === currentMonth) {
+        box.classList.add('payment-box--current');
+      }
+
       box.setAttribute('data-month', I18n.getMonthName(i));
       boxesContainer.appendChild(box);
     }
@@ -255,11 +422,9 @@ const App = (function() {
     table.classList.remove('hidden');
 
     if (expenses.length === 0) {
-      const tbody = document.getElementById('expensesBody');
-      tbody.innerHTML = '';
-      const row = document.createElement('tr');
-      row.innerHTML = `<td colspan="3" class="text-center">${I18n.t('loading')}</td>`;
-      tbody.appendChild(row);
+      const list = document.getElementById('expensesBody');
+      list.innerHTML = '';
+      list.appendChild(el('li', 'expense-list__empty', I18n.t('noExpenses')));
       return;
     }
 
@@ -273,36 +438,58 @@ const App = (function() {
    * @param {number} page - Page number (1-based)
    */
   function renderExpensesPage(expenses, page) {
-    const tbody = document.getElementById('expensesBody');
-    tbody.innerHTML = '';
+    const list = document.getElementById('expensesBody');
+    list.innerHTML = '';
 
     const start = (page - 1) * EXPENSES_PER_PAGE;
     const end = start + EXPENSES_PER_PAGE;
     const pageExpenses = expenses.slice(start, end);
 
     pageExpenses.forEach(expense => {
-      const row = document.createElement('tr');
+      const item = el('li', 'expense-item');
+      item.setAttribute('role', 'button');
+      item.setAttribute('tabindex', '0');
 
-      const typeCell = document.createElement('td');
-      typeCell.textContent = I18n.translateExpenseType(expense.type);
+      item.appendChild(el('span', 'expense-item__icon', getExpenseIcon(expense.type)));
 
-      const priceCell = document.createElement('td');
-      priceCell.textContent = formatNumber(expense.price) + ' ₪';
+      const body = el('span', 'expense-item__body');
+      body.appendChild(el('span', 'expense-item__type', I18n.translateExpenseType(expense.type)));
+      if (expense.notes) {
+        body.appendChild(el('span', 'expense-item__notes', String(expense.notes).trim()));
+      }
+      item.appendChild(body);
 
-      const notesCell = document.createElement('td');
-      notesCell.textContent = expense.notes || '-';
-
-      row.appendChild(typeCell);
-      row.appendChild(priceCell);
-      row.appendChild(notesCell);
+      const amountClass = expense.price > 0 ? 'expense-item__amount expense-item__amount--income' : 'expense-item__amount';
+      const amount = el('span', amountClass, formatNumber(expense.price) + ' ₪');
+      amount.setAttribute('dir', 'ltr');
+      item.appendChild(amount);
 
       // Click handler to navigate to expense detail
-      row.addEventListener('click', () => {
+      item.addEventListener('click', () => {
         navigateToExpense(expense);
       });
 
-      tbody.appendChild(row);
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          navigateToExpense(expense);
+        }
+      });
+
+      list.appendChild(item);
     });
+  }
+
+  /**
+   * Pick an icon for an expense type
+   * @param {string} type - Hebrew expense type
+   * @returns {string} Emoji icon
+   */
+  function getExpenseIcon(type) {
+    const text = String(type || '');
+    if (text.includes('מנקה') || text.includes('ניקוי')) return '🧹';
+    if (text.includes('חשמל')) return '⚡';
+    return '🧾';
   }
 
   /**
@@ -371,7 +558,7 @@ const App = (function() {
     container.insertBefore(errorDiv, container.firstChild);
 
     // Hide loading spinners
-    document.querySelectorAll('.loading').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.loading, .skeleton-group').forEach(node => node.classList.add('hidden'));
   }
 
   // Initialize on DOM ready
