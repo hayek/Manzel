@@ -18,7 +18,12 @@ npx http-server
 
 Then open `http://localhost:8000` in your browser.
 
-**No build step, no linting, no tests configured.** Direct file editing and browser refresh.
+**No build step, no linting.** Direct file editing and browser refresh.
+
+```bash
+# Unit tests for the pure data modules (Node 22 built-in runner, no dependencies)
+node --test tests/*.test.js
+```
 
 ## Architecture
 
@@ -46,21 +51,33 @@ const ModuleName = (function() {
 - **App** (`js/app.js`) - Main dashboard page logic
 - **ResidentPage** (`js/resident.js`) - Resident detail view
 - **ExpensePage** (`js/expense.js`) - Expense detail view
+- **Projects** (`js/projects.js`) - Pure parsing/status logic for building projects (Node-testable; shared by all pages)
+- **ProjectPage** (`js/project.js`) - Project detail view
 
 ### Pages
 - `index.html` - Main dashboard with building visualization
 - `resident.html` - Individual resident payment history
 - `expense.html` - Expense details
 - `payment.html` - Payment methods and options (BIT, Paybox, cash)
+- `project.html?id=<project id>` - Building project: collected vs. goal and per-apartment payments
 
 ## Data Source
 
-Google Sheets API via Google Visualization API. Spreadsheet contains 5 sheets:
+Google Sheets API via Google Visualization API. The site reads these sheets:
 - `Payments` - Resident payment records by month/year
 - `total` - Total maintenance fund amount
 - `Expence` - Building expenses (note: typo is intentional, matches source)
 - `building` - Floor/apartment layout
 - `Residents` - Apartment details: apartment number, family name, first name, property owner, phone
+- `Announcement` - Cell A1 is shown as a banner on the main page (A2 holds a Glide link, ignored)
+- `Projects` - One row per building project: `id | name | description | per_apartment | total_cost | due_date | status` (`open`/`done`)
+- `ProjectPayments` - One row per payment: `project_id | apartment | amount | date | method` (`cash`/`bit`/`paybox`, empty = cash; split payments add up)
+
+The spreadsheet is also connected to a Glide app - never modify existing tabs.
+
+**gviz gotcha:** requesting a tab that doesn't exist silently returns the *first* tab (`Payments`). Optional tabs are loaded with `fetchOptionalSheet` and validated with `Projects.hasHeaders`, so a missing tab yields empty data instead of garbage.
+
+Project money is separate from the maintenance fund: it never affects the total, expenses, or monthly debt.
 
 ## Key Conventions
 
@@ -82,7 +99,7 @@ Google Sheets API via Google Visualization API. Spreadsheet contains 5 sheets:
 
 ### Caching
 - Session storage with 5-minute TTL
-- Cache key: `manzel_data_v4`
+- Cache key: `manzel_data_v5` (bump when the cached data shape changes)
 - Force refresh available via `SheetsAPI.fetchAllData(true)`
 
 ### Theming
@@ -106,3 +123,4 @@ Google Sheets API via Google Visualization API. Spreadsheet contains 5 sheets:
 - Shows action buttons on resident page when debt exists:
   - Copy debt message (localized, includes unpaid months and link)
   - Send via WhatsApp (uses phone from Residents sheet)
+  - Buttons also appear when the apartment owes money for a project; each project due is its own message line
