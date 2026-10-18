@@ -119,6 +119,13 @@ const SheetsAPI = (function() {
   }
 
   /**
+   * Drop cached data so the next fetch reads the sheet again
+   */
+  function clearCache() {
+    sessionStorage.removeItem(CACHE_KEY);
+  }
+
+  /**
    * Fetch all required data
    * @param {boolean} forceRefresh - Skip cache
    * @returns {Promise<Object>} All sheet data
@@ -409,6 +416,7 @@ const SheetsAPI = (function() {
   return {
     fetchAllData,
     getResidentData,
+    clearCache,
     SPREADSHEET_ID
   };
 })();
