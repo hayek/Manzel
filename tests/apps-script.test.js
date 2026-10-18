@@ -35,6 +35,7 @@ test('findPaymentRow uses the year column, not the Date year', () => {
 test('planMonthly writes empty cells and skips filled ones, including 0 discounts', () => {
   const plan = Logic.planMonthly(PAYMENTS, { apartment: 4, year: 2026, amounts: { 8: 50, 9: 50 } });
   assert.deepEqual(plan.writes, [{ row: 2, col: 5, value: 50 }]);
+  assert.deepEqual(plan.written, [8]);
   assert.deepEqual(plan.skipped, [9]);
   assert.deepEqual(plan.missing, []);
 });
@@ -42,6 +43,7 @@ test('planMonthly writes empty cells and skips filled ones, including 0 discount
 test('planMonthly reports months whose row does not exist and writes nothing', () => {
   const plan = Logic.planMonthly(PAYMENTS, { apartment: 4, year: 2027, amounts: { 8: 50, 9: 50 } });
   assert.deepEqual(plan.writes, []);
+  assert.deepEqual(plan.written, []);
   assert.deepEqual(plan.missing, [8, 9]);
 });
 

@@ -56,11 +56,12 @@ function isEmpty(cell) {
  * Plan the writes for a monthly payment, never overwriting a filled cell
  * @param {Array<Array>} values - Payments values including the header row
  * @param {Object} request - { apartment, year, amounts: { month: amount } }
- * @returns {Object} { writes: [{ row, col, value }] (1-based), skipped: [month], missing: [month] }
+ * @returns {Object} { writes: [{ row, col, value }] (1-based), written: [month], skipped: [month], missing: [month] }
  */
 function planMonthly(values, request) {
   const months = Object.keys(request.amounts).map(Number).sort((a, b) => a - b);
   const writes = [];
+  const written = [];
   const skipped = [];
   const missing = [];
 
@@ -72,10 +73,12 @@ function planMonthly(values, request) {
       skipped.push(month);
     } else {
       writes.push({ row: row + 1, col: request.apartment + 1, value: request.amounts[month] });
+      written.push(month);
     }
   });
 
-  return { writes: missing.length > 0 ? [] : writes, skipped, missing };
+  if (missing.length > 0) return { writes: [], written: [], skipped, missing };
+  return { writes, written, skipped, missing };
 }
 
 /**
