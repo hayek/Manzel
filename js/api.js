@@ -5,16 +5,18 @@
 
 const SheetsAPI = (function() {
   const SPREADSHEET_ID = '1_zdYPJNYSifPeQPI5CtqhfnvgzOFgxjOUe0jJDVzo1c';
-  const CACHE_KEY = 'manzel_data_v4'; // Updated to include Residents table
+  const CACHE_KEY = 'manzel_data_v5'; // Updated to include Projects, ProjectPayments and Announcement
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   /**
    * Build the Google Sheets API URL
    * @param {string} sheetName - Name of the sheet to fetch
+   * @param {number} [headers] - Number of header rows (lets gviz skip guessing)
    * @returns {string} API URL
    */
-  function buildUrl(sheetName) {
-    return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  function buildUrl(sheetName, headers) {
+    const headersParam = headers === undefined ? '' : `&headers=${headers}`;
+    return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json${headersParam}&sheet=${encodeURIComponent(sheetName)}`;
   }
 
   /**
@@ -56,10 +58,11 @@ const SheetsAPI = (function() {
   /**
    * Fetch data from a specific sheet
    * @param {string} sheetName - Name of the sheet
+   * @param {number} [headers] - Number of header rows
    * @returns {Promise<Object>} Parsed sheet data
    */
-  async function fetchSheet(sheetName) {
-    const url = buildUrl(sheetName);
+  async function fetchSheet(sheetName, headers) {
+    const url = buildUrl(sheetName, headers);
 
     try {
       const response = await fetch(url);
@@ -71,6 +74,21 @@ const SheetsAPI = (function() {
     } catch (error) {
       console.error(`Error fetching sheet "${sheetName}":`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Fetch a sheet that may not exist - never throws
+   * Note: gviz returns the first tab for unknown sheet names, so callers must validate the result
+   * @param {string} sheetName - Name of the sheet
+   * @param {number} headers - Number of header rows
+   * @returns {Promise<Object|null>} Parsed sheet data, or null on error
+   */
+  async function fetchOptionalSheet(sheetName, headers) {
+    try {
+      return await fetchSheet(sheetName, headers);
+    } catch (error) {
+      return null;
     }
   }
 
@@ -111,12 +129,15 @@ const SheetsAPI = (function() {
       if (cached) return cached;
     }
 
-    const [payments, total, expenses, building, residents] = await Promise.all([
+    const [payments, total, expenses, building, residents, projects, projectPayments, announcement] = await Promise.all([
       fetchSheet('Payments'),
       fetchSheet('total'),
       fetchSheet('Expence'),
       fetchSheet('building'),
-      fetchSheet('Residents')
+      fetchSheet('Residents'),
+      fetchOptionalSheet('Projects', 1),
+      fetchOptionalSheet('ProjectPayments', 1),
+      fetchOptionalSheet('Announcement', 0)
     ]);
 
     const data = {
@@ -124,7 +145,10 @@ const SheetsAPI = (function() {
       total: processTotal(total),
       expenses: processExpenses(expenses),
       building: processBuilding(building),
-      residents: processResidents(residents)
+      residents: processResidents(residents),
+      projects: Projects.parseProjects(projects),
+      projectPayments: Projects.parsePayments(projectPayments),
+      announcement: processAnnouncement(announcement)
     };
 
     setCachedData(data);
@@ -235,6 +259,20 @@ const SheetsAPI = (function() {
       receipt: row[2] || '',
       notes: row[3] || ''
     })).filter(expense => expense.type).reverse();
+  }
+
+  /**
+   * Process announcement text (cell A1; the Glide link below it is ignored)
+   * @param {Object|null} raw - Raw sheet data
+   * @returns {string} Announcement text, or '' if none
+   */
+  function processAnnouncement(raw) {
+    // More than 2 columns means gviz fell back to the Payments tab
+    if (!raw || raw.cols.length > 2 || raw.rows.length === 0) return '';
+
+    const cell = raw.rows[0].find(value => value !== null && String(value).trim());
+    if (!cell || /^https?:/.test(String(cell).trim())) return '';
+    return String(cell).trim();
   }
 
   /**
@@ -380,3 +418,7 @@ const SheetsAPI = (function() {
     SPREADSHEET_ID
   };
 })();
+
+if (typeof module !== 'undefined') {
+  module.exports = SheetsAPI;
+}
