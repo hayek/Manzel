@@ -45,12 +45,11 @@ test.beforeEach(() => {
   };
 });
 
-test('loads projects, payments and announcement when the tabs exist', async () => {
+test('loads projects and payments when the tabs exist', async () => {
   const requested = installFetch({
     ...BASE_TABS,
     Projects: table(Projects.PROJECT_HEADERS, [['roof-stairs-2026', 'זיפות גג + מדרגות', '', 1700, 15340, '25/10/2026', 'open']]),
-    ProjectPayments: table(Projects.PAYMENT_HEADERS, [['roof-stairs-2026', 3, 1700, '20/10/2026', 'bit']]),
-    Announcement: table([''], [['שנה טובה ומוצלחת'], ['https://go.glideapps.com/app/x']])
+    ProjectPayments: table(Projects.PAYMENT_HEADERS, [['roof-stairs-2026', 3, 1700, '20/10/2026', 'bit']])
   });
 
   const data = await SheetsAPI.fetchAllData(true);
@@ -59,38 +58,31 @@ test('loads projects, payments and announcement when the tabs exist', async () =
   assert.equal(data.projects[0].perApartment, 1700);
   assert.equal(data.projectPayments.length, 1);
   assert.equal(data.projectPayments[0].method, 'bit');
-  assert.equal(data.announcement, 'שנה טובה ומוצלחת');
   assert.equal(data.total, 601.1);
   assert.equal(requested.find(r => r.sheet === 'Projects').headers, '1');
   assert.equal(requested.find(r => r.sheet === 'ProjectPayments').headers, '1');
-  assert.equal(requested.find(r => r.sheet === 'Announcement').headers, '0');
+  assert.equal(requested.some(r => r.sheet === 'Announcement'), false);
+  assert.equal('announcement' in data, false);
 });
 
-test('missing tabs (gviz falls back to Payments) give empty project data and no announcement', async () => {
+test('missing tabs (gviz falls back to Payments) give empty project data', async () => {
   installFetch(BASE_TABS);
 
   const data = await SheetsAPI.fetchAllData(true);
 
   assert.deepEqual(data.projects, []);
   assert.deepEqual(data.projectPayments, []);
-  assert.equal(data.announcement, '');
   assert.equal(data.total, 601.1);
 });
 
 test('a failing optional tab does not break the page data', async () => {
-  installFetch(BASE_TABS, { failing: ['Projects', 'ProjectPayments', 'Announcement'] });
+  installFetch(BASE_TABS, { failing: ['Projects', 'ProjectPayments'] });
 
   const data = await SheetsAPI.fetchAllData(true);
 
   assert.deepEqual(data.projects, []);
   assert.deepEqual(data.projectPayments, []);
-  assert.equal(data.announcement, '');
   assert.deepEqual(data.building.map(f => f.apartments), [[2, 3], [1]]);
-});
-
-test('announcement skips a leading link and is empty for a blank tab', async () => {
-  installFetch({ ...BASE_TABS, Announcement: table([''], [[null], ['https://x.y']]) });
-  assert.equal((await SheetsAPI.fetchAllData(true)).announcement, '');
 });
 
 test('getResidentData lists open projects and any project the apartment still owes', async () => {
@@ -105,8 +97,7 @@ test('getResidentData lists open projects and any project the apartment still ow
       ['roof', 1, 1000, '20/10/2026', 'bit'],
       ['old-paid', 1, 100, '', ''],
       ['old-owed', 2, 200, '', '']
-    ]),
-    Announcement: table([''], [['']])
+    ])
   });
   await SheetsAPI.fetchAllData(true);
 

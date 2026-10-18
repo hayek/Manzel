@@ -17,7 +17,6 @@ const App = (function() {
       appData = await SheetsAPI.fetchAllData();
 
       // Render all sections
-      renderAnnouncement(appData.announcement);
       renderTotal(appData.total);
       renderMonthProgress(appData.building, appData.payments);
       renderProjects(appData.projects, appData.projectPayments, appData.building);
@@ -51,16 +50,6 @@ const App = (function() {
    */
   function getAptNumbers(floors) {
     return floors.flatMap(floor => floor.apartments).sort((a, b) => a - b);
-  }
-
-  /**
-   * Render the announcement strip (hidden when empty)
-   * @param {string} text - Announcement text
-   */
-  function renderAnnouncement(text) {
-    if (!text) return;
-    document.getElementById('announcementText').textContent = text;
-    document.getElementById('announcement').classList.remove('hidden');
   }
 
   /**

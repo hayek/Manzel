@@ -5,7 +5,7 @@
 
 const SheetsAPI = (function() {
   const SPREADSHEET_ID = '1_zdYPJNYSifPeQPI5CtqhfnvgzOFgxjOUe0jJDVzo1c';
-  const CACHE_KEY = 'manzel_data_v5'; // Updated to include Projects, ProjectPayments and Announcement
+  const CACHE_KEY = 'manzel_data_v6'; // Updated to include Projects and ProjectPayments
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   /**
@@ -129,15 +129,14 @@ const SheetsAPI = (function() {
       if (cached) return cached;
     }
 
-    const [payments, total, expenses, building, residents, projects, projectPayments, announcement] = await Promise.all([
+    const [payments, total, expenses, building, residents, projects, projectPayments] = await Promise.all([
       fetchSheet('Payments'),
       fetchSheet('total'),
       fetchSheet('Expence'),
       fetchSheet('building'),
       fetchSheet('Residents'),
       fetchOptionalSheet('Projects', 1),
-      fetchOptionalSheet('ProjectPayments', 1),
-      fetchOptionalSheet('Announcement', 0)
+      fetchOptionalSheet('ProjectPayments', 1)
     ]);
 
     const data = {
@@ -147,8 +146,7 @@ const SheetsAPI = (function() {
       building: processBuilding(building),
       residents: processResidents(residents),
       projects: Projects.parseProjects(projects),
-      projectPayments: Projects.parsePayments(projectPayments),
-      announcement: processAnnouncement(announcement)
+      projectPayments: Projects.parsePayments(projectPayments)
     };
 
     setCachedData(data);
@@ -259,20 +257,6 @@ const SheetsAPI = (function() {
       receipt: row[2] || '',
       notes: row[3] || ''
     })).filter(expense => expense.type).reverse();
-  }
-
-  /**
-   * Process announcement text (cell A1; the Glide link below it is ignored)
-   * @param {Object|null} raw - Raw sheet data
-   * @returns {string} Announcement text, or '' if none
-   */
-  function processAnnouncement(raw) {
-    // More than 2 columns means gviz fell back to the Payments tab
-    if (!raw || raw.cols.length > 2 || raw.rows.length === 0) return '';
-
-    const cell = raw.rows[0].find(value => value !== null && String(value).trim());
-    if (!cell || /^https?:/.test(String(cell).trim())) return '';
-    return String(cell).trim();
   }
 
   /**

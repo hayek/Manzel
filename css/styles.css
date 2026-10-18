@@ -1466,20 +1466,6 @@ body {
   height: 14px;
 }
 
-/* Announcement strip */
-.announcement {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-warning) 12%, var(--color-surface));
-  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
-  font-size: 0.9375rem;
-  font-weight: 500;
-}
-
 /* Progress bar */
 .progress {
   height: 8px;
