@@ -6,7 +6,7 @@
 
 const AdminAPI = (function() {
   // Apps Script web app (/exec) URL - see apps-script/README.md
-  const ENDPOINT = '';
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyTYPDR4QXFdDvUFisMAHEP5GJrivcDTZdlwKAEprsPJl1Z8USa31gjN-CE84b46mQ2/exec';
   const PIN_KEY = 'manzel_admin_pin';
   const ADMIN_KEY = 'manzel_admin';
 
