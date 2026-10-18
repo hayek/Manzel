@@ -391,6 +391,15 @@ const SheetsAPI = (function() {
       }
     }
 
+    // Project dues: every open project, plus any project this apartment still owes
+    const aptNumbers = data.building.flatMap(floor => floor.apartments);
+    const projects = (data.projects || [])
+      .map(project => ({
+        project,
+        ...Projects.summarize(project, data.projectPayments || [], aptNumbers).apartments[Number(aptNumber)]
+      }))
+      .filter(entry => entry.status && (entry.project.status === 'open' || entry.remaining > 0));
+
     console.log('getResidentData lookup:', {
       residentName,
       aptIndex,
@@ -406,6 +415,7 @@ const SheetsAPI = (function() {
       years,
       owed,
       lastYearOwed,
+      projects,
       propertyOwner: residentInfo.propertyOwner || '',
       phone: residentInfo.phone || ''
     };

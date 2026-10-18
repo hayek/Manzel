@@ -1832,3 +1832,20 @@ body {
   padding: var(--spacing-2xl) var(--spacing-md);
   color: var(--color-text-secondary);
 }
+
+/* Resident page: project dues */
+.resident-projects {
+  margin-bottom: var(--spacing-lg);
+}
+
+.project-apartment--link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.project-apartment--link:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}

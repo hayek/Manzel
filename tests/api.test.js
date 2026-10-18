@@ -92,3 +92,32 @@ test('announcement skips a leading link and is empty for a blank tab', async () 
   installFetch({ ...BASE_TABS, Announcement: table([''], [[null], ['https://x.y']]) });
   assert.equal((await SheetsAPI.fetchAllData(true)).announcement, '');
 });
+
+test('getResidentData lists open projects and any project the apartment still owes', async () => {
+  installFetch({
+    ...BASE_TABS,
+    Projects: table(Projects.PROJECT_HEADERS, [
+      ['roof', 'Roof', '', 1700, 15340, '25/10/2026', 'open'],
+      ['old-paid', 'Old paid', '', 100, 300, '', 'done'],
+      ['old-owed', 'Old owed', '', 200, 600, '', 'done']
+    ]),
+    ProjectPayments: table(Projects.PAYMENT_HEADERS, [
+      ['roof', 1, 1000, '20/10/2026', 'bit'],
+      ['old-paid', 1, 100, '', ''],
+      ['old-owed', 2, 200, '', '']
+    ]),
+    Announcement: table([''], [['']])
+  });
+  await SheetsAPI.fetchAllData(true);
+
+  const resident = await SheetsAPI.getResidentData('אמיר');
+
+  assert.deepEqual(resident.projects.map(p => p.project.id), ['roof', 'old-owed']);
+  const [roof, oldOwed] = resident.projects;
+  assert.equal(roof.status, 'partial');
+  assert.equal(roof.paid, 1000);
+  assert.equal(roof.remaining, 700);
+  assert.equal(roof.payments[0].method, 'bit');
+  assert.equal(oldOwed.status, 'unpaid');
+  assert.equal(oldOwed.remaining, 200);
+});
