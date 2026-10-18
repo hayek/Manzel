@@ -42,7 +42,7 @@ admin page (static, GitHub Pages) --POST JSON {pin, action, ...}--> Google Apps 
 
 - **Apps Script web app**, container-bound to the spreadsheet (Extensions → Apps Script). Deployed as a web app: *Execute as: me*, *Who has access: anyone*. The web app URL is a constant in the admin page JS. The URL being public is fine, because every request needs the PIN.
 - **PIN storage:** the script compares against a Script Property `ADMIN_PIN`, set once in the Apps Script project settings. The value is never written into any repo file, including this spec and the plan. The script source lives in the repo at `apps-script/` (no PIN in it) and is copied into the Apps Script editor.
-- **Brute-force slowdown:** after 5 wrong PINs within 10 minutes, the script rejects *all* requests for 10 minutes (CacheService counter; Apps Script has no client IP). Accepted risk: an attacker could lock Amir out for 10 minutes.
+- **Brute-force slowdown (Amir chose to keep a 4-digit PIN):** after 5 wrong PINs, the script rejects *all* requests for a lockout that doubles each round — 10 min, 20 min, 40 min … capped at 24 h — and resets to zero after a correct PIN. State lives in Script Properties (CacheService can evict). Apps Script has no client IP, so the lock is global. Accepted risk (Amir's call): a patient attacker could eventually guess the PIN, and while trying would keep the admin page locked for Amir too; manual sheet editing is unaffected.
 - **Request format:** `fetch(url, { method: 'POST', body: JSON.stringify(payload) })` with no custom headers. That makes it a "simple" CORS request (text/plain), so Apps Script needs no preflight. The response is JSON `{ ok: true, message, ... }` or `{ ok: false, error }`.
 - **Google's permission prompt:** the first deploy asks Amir to authorize the script on his account. **Amir clicks "Allow" himself.** Claude never grants OAuth consent.
 
@@ -79,6 +79,13 @@ Checks the PIN only. Used by the PIN screen.
 - **Verify the displayed total is identical before and after (601.1 today).** If it differs, revert and stop.
 - Glide reads the value, not the formula, so it's unaffected.
 
+## Entry point: the "~" footer button
+
+- The existing "~" admin toggle in the footer (`index.html`) stays the way in. Today it flips `localStorage.manzel_admin` with no PIN.
+- **New behavior:** tapping "~" while admin mode is off opens a PIN prompt. A correct PIN (verified by the script) turns admin mode on (`manzel_admin = true`, PIN kept in `sessionStorage`) and opens the admin page. Tapping "~" while admin mode is on turns it off.
+- Admin mode keeps gating the existing copy/WhatsApp debt buttons on resident pages, so those now require the PIN too.
+- `/admin` still works as a direct link; it shows the same PIN screen when admin mode isn't on.
+
 ## Admin page UX
 
 - `admin/index.html` (so `/Manzel/admin` works on GitHub Pages), with `<meta name="robots" content="noindex">`, same header (back + language), same footer/theme.
@@ -99,7 +106,7 @@ Checks the PIN only. Used by the PIN screen.
 ## Decided by Claude (flag if you disagree)
 
 - Google Apps Script as the write backend; PIN stored in Script Properties, not in the repo or site.
-- Global 10-minute lockout after 5 wrong PINs.
+- Global lockout after 5 wrong PINs, doubling each round (10 min → 24 h cap).
 - No overwriting monthly cells; no automatic creation of a new year's rows.
 - Yearly shortcut = Jan–Nov 50 + Dec 0.
 - Widen the fund-total formula ranges (value verified unchanged).
