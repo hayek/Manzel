@@ -129,3 +129,35 @@ test('isOverdue is false when there is no usable due date', () => {
   const [project] = Projects.parseProjects({ cols: PROJECT_COLS, rows: [['x', 'X', '', 100, 100, '', 'open']] });
   assert.equal(Projects.isOverdue(Projects.summarize(project, [], APTS), new Date(2030, 0, 1)), false);
 });
+
+test('amounts typed as text with commas or ₪ still count', () => {
+  const [project] = Projects.parseProjects({ cols: PROJECT_COLS, rows: [['p', 'P', '', '1,700', '15,340 ₪', '', 'open']] });
+  assert.equal(project.perApartment, 1700);
+  assert.equal(project.totalCost, 15340);
+  const [payment] = Projects.parsePayments({ cols: PAYMENT_COLS, rows: [['p', '3', '1,700 ₪', '', '']] });
+  assert.equal(payment.amount, 1700);
+});
+
+test('projects without a usable per-apartment amount are skipped', () => {
+  const rows = [['bad', 'Bad', '', 'abc', 0, '', 'open'], ['zero', 'Zero', '', 0, 0, '', 'open'], ROOF];
+  assert.deepEqual(Projects.parseProjects({ cols: PROJECT_COLS, rows }).map(p => p.id), ['roof-stairs-2026']);
+});
+
+test('duplicate project ids keep only the first row', () => {
+  const rows = [ROOF, ['roof-stairs-2026', 'Copy', '', 999, 0, '', 'open']];
+  const projects = Projects.parseProjects({ cols: PROJECT_COLS, rows });
+  assert.equal(projects.length, 1);
+  assert.equal(projects[0].perApartment, 1700);
+});
+
+test('parseDate accepts dots, dashes and ISO dates', () => {
+  sameDay(Projects.parseDate('25.10.2026'), 2026, 10, 25);
+  sameDay(Projects.parseDate('25-10-2026'), 2026, 10, 25);
+  sameDay(Projects.parseDate('2026-10-25'), 2026, 10, 25);
+});
+
+test('parseDate rejects impossible dates such as US-style 10/25/2026', () => {
+  assert.equal(Projects.parseDate('10/25/2026'), null);
+  assert.equal(Projects.parseDate('31/02/2026'), null);
+  assert.equal(Projects.parseDate('2026-13-01'), null);
+});

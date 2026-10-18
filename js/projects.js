@@ -41,13 +41,40 @@ const Projects = (function() {
       return new Date(Number(gviz[1]), Number(gviz[2]), Number(gviz[3]));
     }
 
-    const dmy = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+    const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (iso) {
+      return buildDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+    }
+
+    const dmy = text.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/);
     if (dmy) {
       const year = dmy[3].length === 2 ? 2000 + Number(dmy[3]) : Number(dmy[3]);
-      return new Date(year, Number(dmy[2]) - 1, Number(dmy[1]));
+      return buildDate(year, Number(dmy[2]), Number(dmy[1]));
     }
 
     return null;
+  }
+
+  /**
+   * Build a local date, rejecting impossible ones (e.g. 31/02 or US-style 10/25)
+   * @param {number} year - Full year
+   * @param {number} month - Month (1-12)
+   * @param {number} day - Day of month
+   * @returns {Date|null} Date, or null if out of range
+   */
+  function buildDate(year, month, day) {
+    const date = new Date(year, month - 1, day);
+    return date.getMonth() === month - 1 && date.getDate() === day ? date : null;
+  }
+
+  /**
+   * Convert a cell to a number, tolerating text like "1,700 ₪"
+   * @param {*} value - Raw cell value
+   * @returns {number} Number (0 if unparseable)
+   */
+  function toNumber(value) {
+    if (typeof value === 'number') return value;
+    return Number(String(value || '').replace(/[,₪\s]/g, '')) || 0;
   }
 
   /**
@@ -67,17 +94,26 @@ const Projects = (function() {
   function parseProjects(raw) {
     if (!raw || !hasHeaders(raw.cols, PROJECT_HEADERS)) return [];
 
+    const seen = new Set();
     return raw.rows
-      .filter(row => text(row[0]))
       .map(row => ({
         id: text(row[0]),
         name: text(row[1]),
         description: text(row[2]),
-        perApartment: Number(row[3]) || 0,
-        totalCost: Number(row[4]) || 0,
+        perApartment: toNumber(row[3]),
+        totalCost: toNumber(row[4]),
         dueDate: text(row[5]),
         status: text(row[6]).toLowerCase() === 'done' ? 'done' : 'open'
-      }));
+      }))
+      .filter(project => {
+        // Skip rows that would show wrong numbers: no id, no amount, or a duplicate id
+        if (!project.id || project.perApartment <= 0 || seen.has(project.id)) {
+          if (project.id) console.warn('Skipping project row:', project.id);
+          return false;
+        }
+        seen.add(project.id);
+        return true;
+      });
   }
 
   /**
@@ -92,7 +128,7 @@ const Projects = (function() {
       .map(row => ({
         projectId: text(row[0]),
         apartment: Number(row[1]),
-        amount: Number(row[2]) || 0,
+        amount: toNumber(row[2]),
         date: text(row[3]),
         method: METHOD_ALIASES[text(row[4]).toLowerCase()] || 'cash'
       }))
