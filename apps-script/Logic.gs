@@ -10,6 +10,8 @@ const HEBREW_MONTHS = [
   'ספט', 'אוק', 'נוב', 'דצמ'
 ];
 const METHODS = ['cash', 'bit', 'paybox'];
+const RECEIPT_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
+const RECEIPT_MAX_BYTES = 10 * 1024 * 1024;
 const LOCK_AFTER_FAILURES = 5;
 const LOCK_BASE_MS = 10 * 60 * 1000;
 const LOCK_MAX_MS = 24 * 60 * 60 * 1000;
@@ -183,9 +185,34 @@ function validate(action, p) {
     if (!isText(p.type)) return 'missing type';
     if (typeof p.amount !== 'number' || !(p.amount > 0)) return 'invalid amount';
     if (!parseIsoDate(p.date)) return 'invalid date';
+    if (p.receiptFile) return validateReceipt(p.receiptFile);
     return null;
   }
   return 'unknown action';
+}
+
+/**
+ * Check an uploaded receipt: a photo or PDF, base64, at most 10 MB
+ * @param {Object} file - { name, mimeType, data (base64) }
+ * @returns {string|null} Error message, or null if valid
+ */
+function validateReceipt(file) {
+  if (!RECEIPT_TYPES[file.mimeType]) return 'receipt must be a photo or PDF';
+  const data = String(file.data || '');
+  if (!data || !/^[A-Za-z0-9+/]+=*$/.test(data)) return 'invalid receipt file';
+  if (data.length * 3 / 4 > RECEIPT_MAX_BYTES) return 'receipt is larger than 10 MB';
+  return null;
+}
+
+/**
+ * Drive file name for a receipt: "yyyy-mm-dd type amount.ext"
+ * @param {Object} request - { type, amount, date }
+ * @param {Object} file - { mimeType }
+ * @returns {string} File name
+ */
+function receiptFileName(request, file) {
+  const type = String(request.type).trim().replace(/[\\/]/g, '-');
+  return `${request.date} ${type} ${Math.abs(Number(request.amount))}.${RECEIPT_TYPES[file.mimeType]}`;
 }
 
 /**
@@ -246,6 +273,8 @@ if (typeof module !== 'undefined') {
     buildExpenseRow,
     buildProjectRow,
     validate,
+    validateReceipt,
+    receiptFileName,
     timeZoneError,
     lockState,
     afterFailure,

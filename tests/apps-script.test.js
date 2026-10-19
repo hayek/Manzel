@@ -137,3 +137,26 @@ test('requestCacheKey accepts client request ids and rejects junk', () => {
   assert.equal(Logic.requestCacheKey('short'), null);
   assert.equal(Logic.requestCacheKey('bad id with spaces!!'), null);
 });
+
+const PDF = { name: 'bill.pdf', mimeType: 'application/pdf', data: 'JVBERi0xLjQ=' };
+const JPEG = { name: 'IMG_1.jpg', mimeType: 'image/jpeg', data: '/9j/4AAQ' };
+
+test('receiptFileName is date, type and amount with the right extension', () => {
+  assert.equal(Logic.receiptFileName({ type: 'חשמל', amount: 97.74, date: '2026-10-19' }, JPEG), '2026-10-19 חשמל 97.74.jpg');
+  assert.equal(Logic.receiptFileName({ type: 'חשמל', amount: 97.74, date: '2026-10-19' }, PDF), '2026-10-19 חשמל 97.74.pdf');
+  assert.equal(Logic.receiptFileName({ type: 'a/b\\c', amount: 5, date: '2026-10-19' }, { mimeType: 'image/png' }), '2026-10-19 a-b-c 5.png');
+});
+
+test('validate accepts an expense with a photo or PDF receipt', () => {
+  const base = { type: 'חשמל', amount: 97.74, date: '2026-10-19' };
+  assert.equal(Logic.validate('expense', { ...base, receiptFile: JPEG }), null);
+  assert.equal(Logic.validate('expense', { ...base, receiptFile: PDF }), null);
+});
+
+test('validate rejects receipts of other types, empty, or over 10 MB', () => {
+  const base = { type: 'חשמל', amount: 97.74, date: '2026-10-19' };
+  assert.notEqual(Logic.validate('expense', { ...base, receiptFile: { mimeType: 'text/html', data: 'PGh0bWw+' } }), null);
+  assert.notEqual(Logic.validate('expense', { ...base, receiptFile: { mimeType: 'image/jpeg', data: '' } }), null);
+  assert.notEqual(Logic.validate('expense', { ...base, receiptFile: { mimeType: 'image/jpeg', data: 'A'.repeat(14 * 1024 * 1024) } }), null);
+  assert.notEqual(Logic.validate('expense', { ...base, receiptFile: { mimeType: 'image/jpeg', data: 'not base64!' } }), null);
+});

@@ -71,6 +71,7 @@ const ModuleName = (function() {
 - 5 wrong PINs lock the endpoint (10 min, doubling, max 24 h). Delete Script Property `ADMIN_LOCK` to unlock by hand.
 - After changing `apps-script/*.gs`, paste into the Apps Script editor and use Deploy → Manage deployments → Edit → New version so the `/exec` URL stays the same.
 - `total!A2` is `=SUM(Payments!B2:J)+SUM(Expence!B2:B)` (open-ended ranges so new rows count).
+- Expense receipts picked on the admin page (photo/PDF; photos shrunk to 2000px JPEG in the browser) are uploaded by the script to the Drive folder "Manzel receipts" (anyone-with-link can view); the link goes into the receipt column.
 
 ## Data Source
 

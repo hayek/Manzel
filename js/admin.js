@@ -5,6 +5,8 @@
 
 const AdminPage = (function() {
   const MONTHLY_AMOUNT = 50;
+  const RECEIPT_MAX_SIDE = 2000;
+  const RECEIPT_MAX_BYTES = 10 * 1024 * 1024;
   const LOCALES = { he: 'he-IL', en: 'en-GB', ar: 'ar', ru: 'ru-RU', uk: 'uk-UA' };
 
   let data = null;
@@ -14,6 +16,8 @@ const AdminPage = (function() {
   let wholeYear = false;
   // Last unsaved request: retrying the same save reuses its id so the script won't write twice
   let pendingRequest = null;
+  // Receipt picked for the expense form: { name, mimeType, data (base64) }
+  let receiptFile = null;
 
   /**
    * Initialize the page
@@ -47,6 +51,8 @@ const AdminPage = (function() {
     document.getElementById('monthlyForm').addEventListener('submit', onSaveMonthly);
     document.getElementById('projectForm').addEventListener('submit', onSaveProject);
     document.getElementById('expenseForm').addEventListener('submit', onSaveExpense);
+    document.getElementById('expenseReceipt').addEventListener('change', onPickReceipt);
+    document.getElementById('receiptRemove').addEventListener('click', clearReceipt);
 
     if (AdminAPI.isLoggedIn()) {
       showPanelScreen();
@@ -458,17 +464,109 @@ const AdminPage = (function() {
     e.preventDefault();
     const type = document.getElementById('expenseType').value.trim();
     const amount = Number(document.getElementById('expenseAmount').value);
-    const result = await submit(e.target, 'expense', {
-      type,
-      amount,
-      date: document.getElementById('expenseDate').value,
-      receipt: document.getElementById('expenseReceipt').value.trim()
-    });
+    const payload = { type, amount, date: document.getElementById('expenseDate').value };
+    if (receiptFile) payload.receiptFile = receiptFile;
+    const result = await submit(e.target, 'expense', payload);
     if (!result.ok) return;
 
+    const hasReceipt = Boolean(receiptFile);
     e.target.reset();
+    clearReceipt();
     await reloadData(true);
-    showMessage(`${I18n.t('adminSaved')} · ${type} · ${formatNumber(amount)} ₪`, false);
+    document.getElementById('expenseDate').value = todayIso();
+    showMessage(`${I18n.t('adminSaved')} · ${type} · ${formatNumber(amount)} ₪${hasReceipt ? ' · 📎' : ''}`, false);
+  }
+
+  /**
+   * Prepare the picked receipt: photos are shrunk to a JPEG, PDFs are sent as they are
+   * @param {Event} e - Change event of the file input
+   */
+  async function onPickReceipt(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    hideMessage();
+
+    try {
+      if (file.type === 'application/pdf') {
+        if (file.size > RECEIPT_MAX_BYTES) throw new Error('too_large');
+        receiptFile = { name: file.name, mimeType: file.type, data: await readBase64(file) };
+      } else if (file.type.startsWith('image/')) {
+        receiptFile = { name: file.name, ...(await shrinkImage(file)) };
+      } else {
+        throw new Error('unsupported');
+      }
+      showReceiptPreview(file);
+    } catch (error) {
+      clearReceipt();
+      showMessage(I18n.t(error.message === 'too_large' ? 'adminReceiptTooLarge' : 'adminReceiptUnsupported'), true);
+    }
+  }
+
+  /**
+   * Shrink a photo to at most RECEIPT_MAX_SIDE pixels and re-encode it as JPEG
+   * @param {File} file - Image file
+   * @returns {Promise<Object>} { mimeType, data (base64) }
+   */
+  async function shrinkImage(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('unsupported'));
+        img.src = url;
+      });
+      const scale = Math.min(1, RECEIPT_MAX_SIDE / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(image.naturalWidth * scale);
+      canvas.height = Math.round(image.naturalHeight * scale);
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      const data = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+      if (data.length * 3 / 4 > RECEIPT_MAX_BYTES) throw new Error('too_large');
+      return { mimeType: 'image/jpeg', data };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  /**
+   * Read a file as base64 (without the data: prefix)
+   * @param {File} file - File
+   * @returns {Promise<string>} Base64 data
+   */
+  function readBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1]);
+      reader.onerror = () => reject(new Error('unsupported'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Show the picked receipt under the button
+   * @param {File} file - Picked file
+   */
+  function showReceiptPreview(file) {
+    const thumb = document.getElementById('receiptThumb');
+    const isPdf = receiptFile.mimeType === 'application/pdf';
+    thumb.classList.toggle('hidden', isPdf);
+    document.getElementById('receiptIcon').classList.toggle('hidden', !isPdf);
+    if (!isPdf) thumb.src = `data:image/jpeg;base64,${receiptFile.data}`;
+    document.getElementById('receiptName').textContent = file.name;
+    document.getElementById('receiptPicker').classList.add('hidden');
+    document.getElementById('receiptPreview').classList.remove('hidden');
+  }
+
+  /**
+   * Remove the picked receipt
+   */
+  function clearReceipt() {
+    receiptFile = null;
+    document.getElementById('expenseReceipt').value = '';
+    document.getElementById('receiptThumb').removeAttribute('src');
+    document.getElementById('receiptPreview').classList.add('hidden');
+    document.getElementById('receiptPicker').classList.remove('hidden');
   }
 
   /**
