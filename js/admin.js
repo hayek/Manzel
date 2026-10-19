@@ -5,12 +5,15 @@
 
 const AdminPage = (function() {
   const MONTHLY_AMOUNT = 50;
+  const LOCALES = { he: 'he-IL', en: 'en-GB', ar: 'ar', ru: 'ru-RU', uk: 'uk-UA' };
 
   let data = null;
   let monthlyApt = null;
   let projectApt = null;
   let selectedMonths = new Set();
   let wholeYear = false;
+  // Last unsaved request: retrying the same save reuses its id so the script won't write twice
+  let pendingRequest = null;
 
   /**
    * Initialize the page
@@ -118,11 +121,13 @@ const AdminPage = (function() {
   function describeError(result) {
     if (result.error === 'bad_pin') return I18n.t('adminWrongPin');
     if (result.error === 'locked') {
-      const time = new Date(result.retryAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const time = new Date(result.retryAt).toLocaleString(LOCALES[I18n.getCurrentLanguage()] || 'he-IL', {
+        day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
       return I18n.t('adminLocked').replace('{time}', time);
     }
     if (result.error === 'missing_year') return I18n.t('adminMissingYear').replace('{year}', result.year);
-    if (result.error === 'network') return I18n.t('error');
+    if (result.error === 'network') return I18n.t('adminNetworkRetry');
     return result.message || I18n.t('error');
   }
 
@@ -362,7 +367,8 @@ const AdminPage = (function() {
     const pick = apt => {
       projectApt = apt;
       const remaining = summary.apartments[apt].remaining;
-      document.getElementById('projectAmount').value = remaining > 0 ? remaining : summary.project.perApartment;
+      // A fully paid apartment starts empty, so a second payment is a deliberate choice
+      document.getElementById('projectAmount').value = remaining > 0 ? remaining : '';
       renderAptPicker('projectApts', a => projectApt === a, pick, subtitle);
     };
     renderAptPicker('projectApts', a => projectApt === a, pick, subtitle);
@@ -478,7 +484,12 @@ const AdminPage = (function() {
     button.textContent = I18n.t('adminSaving');
     hideMessage();
 
-    const result = await AdminAPI.call(action, payload);
+    const key = `${action}:${JSON.stringify(payload)}`;
+    if (!pendingRequest || pendingRequest.key !== key) {
+      pendingRequest = { key, id: newRequestId() };
+    }
+    const result = await AdminAPI.call(action, payload, pendingRequest.id);
+    if (result.ok) pendingRequest = null;
 
     button.disabled = false;
     button.textContent = I18n.t('adminSave');
@@ -495,6 +506,15 @@ const AdminPage = (function() {
       }
     }
     return result;
+  }
+
+  /**
+   * A random id for one save attempt
+   * @returns {string} UUID
+   */
+  function newRequestId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
   }
 
   /**

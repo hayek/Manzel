@@ -43,10 +43,11 @@ const AdminAPI = (function() {
    * Run an admin action with the stored PIN
    * @param {string} action - monthly | project | expense
    * @param {Object} payload - Action fields
+   * @param {string} [requestId] - Same id on a retry, so the script doesn't save twice
    * @returns {Promise<Object>} Web app response
    */
-  async function call(action, payload) {
-    const result = await post({ ...payload, pin: sessionStorage.getItem(PIN_KEY), action });
+  async function call(action, payload, requestId) {
+    const result = await post({ ...payload, pin: sessionStorage.getItem(PIN_KEY), action, requestId });
     if (result.ok && typeof SheetsAPI !== 'undefined') {
       SheetsAPI.clearCache();
     }
