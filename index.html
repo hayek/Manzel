@@ -195,9 +195,6 @@
     (function() {
       var btn = document.getElementById('adminToggle');
 
-      // An admin flag without a PIN for this session is stale - drop it
-      if (!AdminAPI.isLoggedIn()) AdminAPI.logout();
-
       function updateState() {
         var enabled = AdminAPI.isLoggedIn();
         btn.classList.toggle('admin-toggle--active', enabled);

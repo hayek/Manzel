@@ -112,3 +112,8 @@ test('lockout resets after a correct PIN and is capped at 24 hours', () => {
   state = Logic.afterFailure(state, 0);
   assert.equal(Logic.lockState(state, 0).retryAt, 24 * 60 * MIN);
 });
+
+test('timeZoneError blocks writes when the script and spreadsheet time zones differ', () => {
+  assert.equal(Logic.timeZoneError('Asia/Jerusalem', 'Asia/Jerusalem'), null);
+  assert.match(Logic.timeZoneError('Asia/Jerusalem', 'America/New_York'), /time zone/i);
+});

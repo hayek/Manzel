@@ -271,6 +271,8 @@ const AdminPage = (function() {
   function renderMonths() {
     const container = document.getElementById('monthlyMonths');
     container.innerHTML = '';
+    // The yearly discount only applies to a year with nothing recorded yet
+    document.getElementById('wholeYearBtn').disabled = !monthlyApt || !isYearEmpty(monthlyApt);
     for (let month = 0; month < 12; month++) {
       const payment = monthlyApt ? getMonthPayment(monthlyApt, month) : null;
       const recorded = Boolean(payment && payment.amount !== null);
@@ -291,18 +293,28 @@ const AdminPage = (function() {
   }
 
   /**
-   * Select every unrecorded month as a yearly payment (Jan-Nov 50, Dec 0)
+   * Does the apartment have nothing recorded for the selected year?
+   * @param {number} apt - Apartment number
+   * @returns {boolean} True if all 12 months are empty
+   */
+  function isYearEmpty(apt) {
+    for (let month = 0; month < 12; month++) {
+      const payment = getMonthPayment(apt, month);
+      if (payment && payment.amount !== null) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Select the whole year as a yearly payment (Jan-Nov 50, Dec 0)
    */
   function selectWholeYear() {
     if (!monthlyApt) {
       showMessage(I18n.t('adminSelectApartment'), true);
       return;
     }
-    selectedMonths = new Set();
-    for (let month = 0; month < 12; month++) {
-      const payment = getMonthPayment(monthlyApt, month);
-      if (!payment || payment.amount === null) selectedMonths.add(month);
-    }
+    if (!isYearEmpty(monthlyApt)) return;
+    selectedMonths = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     wholeYear = true;
     renderMonths();
   }

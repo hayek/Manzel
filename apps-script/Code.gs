@@ -57,6 +57,9 @@ function handle(request) {
   const invalid = validate(request.action, request);
   if (invalid) return { ok: false, error: 'invalid', message: invalid };
 
+  const tzError = timeZoneError(Session.getScriptTimeZone(), SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone());
+  if (tzError) return { ok: false, error: 'server', message: tzError };
+
   if (request.action === 'monthly') return writeMonthly(request);
   if (request.action === 'project') return writeProject(request);
   return writeExpense(request);

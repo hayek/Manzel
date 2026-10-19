@@ -10,7 +10,7 @@ The admin page (`admin/`) writes to the spreadsheet through this script. It runs
 1. Open the spreadsheet → **Extensions → Apps Script**.
 2. Create `Logic.gs` and `Code.gs` with the contents of this folder (replace everything in each file).
 3. **Project Settings** (gear icon):
-   - Time zone: `(GMT+02:00) Jerusalem`
+   - Time zone: `(GMT+02:00) Jerusalem` — must match the spreadsheet's **File → Settings → Time zone** (the script refuses to write otherwise)
    - Script Properties → add `ADMIN_PIN` = the admin PIN. **Never commit the PIN to this repo.**
 4. **Deploy → New deployment → Web app**: Execute as **Me**, Who has access **Anyone**. Approve Google's permission prompt.
 5. Copy the `/exec` URL into `AdminAPI.ENDPOINT` in `js/admin-api.js`.

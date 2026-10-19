@@ -169,6 +169,17 @@ function validate(action, p) {
 }
 
 /**
+ * Dates are built and read in the script's time zone but stored in the spreadsheet's;
+ * if they differ, a write could land on the wrong day or month.
+ * @param {string} scriptTz - Session.getScriptTimeZone()
+ * @param {string} sheetTz - Spreadsheet time zone
+ * @returns {string|null} Error message, or null if they match
+ */
+function timeZoneError(scriptTz, sheetTz) {
+  return scriptTz === sheetTz ? null : `Script time zone (${scriptTz}) differs from spreadsheet time zone (${sheetTz})`;
+}
+
+/**
  * Is the admin endpoint locked?
  * @param {Object|null} state - { fails, round, lockedUntil }
  * @param {number} now - Epoch ms
@@ -213,6 +224,7 @@ if (typeof module !== 'undefined') {
     buildExpenseRow,
     buildProjectRow,
     validate,
+    timeZoneError,
     lockState,
     afterFailure,
     afterSuccess
