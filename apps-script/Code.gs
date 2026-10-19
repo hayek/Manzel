@@ -7,6 +7,8 @@
 
 const LOCK_PROPERTY = 'ADMIN_LOCK';
 const PIN_PROPERTY = 'ADMIN_PIN';
+const RECEIPTS_FOLDER_PROPERTY = 'RECEIPTS_FOLDER_ID';
+const RECEIPTS_FOLDER_NAME = 'Manzel receipts';
 
 /**
  * Web app entry point
@@ -109,15 +111,49 @@ function writeProject(request) {
 }
 
 /**
- * Append an expense row (columns A-D only)
- * @param {Object} request - { type, amount, date, receipt }
- * @returns {Object} Response with the sheet row
+ * Append an expense row (columns A-D only), uploading the receipt file first if there is one
+ * @param {Object} request - { type, amount, date, receipt?, receiptFile? }
+ * @returns {Object} Response with the sheet row and receipt link
  */
 function writeExpense(request) {
+  const receipt = request.receiptFile ? uploadReceipt(request) : request.receipt;
   const sheet = getSheet('Expence');
   const row = firstEmptyRow(sheet.getRange(1, 1, Math.max(sheet.getLastRow(), 1), 4).getValues());
-  sheet.getRange(row, 1, 1, 4).setValues([buildExpenseRow(request)]);
-  return { ok: true, message: `Added expense in row ${row}`, row };
+  sheet.getRange(row, 1, 1, 4).setValues([buildExpenseRow({ ...request, receipt })]);
+  return { ok: true, message: `Added expense in row ${row}`, row, receipt: receipt || '' };
+}
+
+/**
+ * Save a receipt to the "Manzel receipts" Drive folder, viewable by anyone with the link
+ * @param {Object} request - Expense request with receiptFile { mimeType, data }
+ * @returns {string} Drive link to the file
+ */
+function uploadReceipt(request) {
+  const file = request.receiptFile;
+  const blob = Utilities.newBlob(Utilities.base64Decode(file.data), file.mimeType, receiptFileName(request, file));
+  const driveFile = getReceiptsFolder().createFile(blob);
+  driveFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return driveFile.getUrl();
+}
+
+/**
+ * The receipts folder, created on first use; its id is kept in Script Properties
+ * @returns {Folder} Drive folder
+ */
+function getReceiptsFolder() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty(RECEIPTS_FOLDER_PROPERTY);
+  if (id) {
+    try {
+      const folder = DriveApp.getFolderById(id);
+      if (!folder.isTrashed()) return folder;
+    } catch (error) {
+      // Folder was deleted - create a new one below
+    }
+  }
+  const folder = DriveApp.createFolder(RECEIPTS_FOLDER_NAME);
+  props.setProperty(RECEIPTS_FOLDER_PROPERTY, folder.getId());
+  return folder;
 }
 
 /**

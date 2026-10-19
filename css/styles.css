@@ -2243,3 +2243,73 @@ details[open] > .expense-month__summary .expense-month__title::before {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Receipt picker (admin expense form) */
+.receipt-picker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-gray-300);
+  background: var(--color-surface-secondary);
+  color: var(--color-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.receipt-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.receipt-picker:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.receipt-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-gray-200);
+  background: var(--color-surface-secondary);
+}
+
+.receipt-preview__thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+.receipt-preview__icon {
+  width: 48px;
+  text-align: center;
+  font-size: 1.75rem;
+}
+
+.receipt-preview__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.receipt-preview__remove {
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}

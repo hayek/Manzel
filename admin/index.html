@@ -115,8 +115,17 @@
         <label class="admin-label" for="expenseDate" data-i18n="adminDate">תאריך</label>
         <input class="admin-input" id="expenseDate" type="date" required>
 
-        <label class="admin-label" for="expenseReceipt" data-i18n="adminReceipt">קישור לקבלה (לא חובה)</label>
-        <input class="admin-input" id="expenseReceipt" type="url" dir="ltr" placeholder="https://">
+        <span class="admin-label" data-i18n="adminReceipt">קבלה (לא חובה)</span>
+        <label class="receipt-picker" id="receiptPicker">
+          <input type="file" id="expenseReceipt" accept="image/*,application/pdf">
+          <span data-i18n="adminAddReceipt">📎 צילום או קובץ</span>
+        </label>
+        <div class="receipt-preview hidden" id="receiptPreview">
+          <img class="receipt-preview__thumb hidden" id="receiptThumb" alt="">
+          <span class="receipt-preview__icon hidden" id="receiptIcon" aria-hidden="true">📄</span>
+          <span class="receipt-preview__name" id="receiptName" dir="auto"></span>
+          <button type="button" class="receipt-preview__remove" id="receiptRemove" aria-label="Remove">✕</button>
+        </div>
 
         <button type="submit" class="pay-btn admin-submit" data-i18n="adminSave">שמירה</button>
       </form>
