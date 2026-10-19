@@ -480,21 +480,19 @@ const App = (function() {
     list.innerHTML = '';
 
     const start = (page - 1) * MONTHS_PER_PAGE;
-    months.slice(start, start + MONTHS_PER_PAGE).forEach((month, index) => {
-      list.appendChild(createExpenseMonth(month, page === 1 && index === 0));
+    months.slice(start, start + MONTHS_PER_PAGE).forEach(month => {
+      list.appendChild(createExpenseMonth(month));
     });
   }
 
   /**
-   * Create a month group: title, total and per-type summary; expands to the expenses
+   * Create a month group: title, total and per-type summary; expands (collapsed by default) to the expenses
    * @param {Object} month - { year, month, total, types, items }
-   * @param {boolean} open - Start expanded
    * @returns {HTMLElement} List item
    */
-  function createExpenseMonth(month, open) {
+  function createExpenseMonth(month) {
     const item = el('li', 'expense-month');
     const details = el('details');
-    details.open = open;
 
     const summary = el('summary', 'expense-month__summary');
     const header = el('div', 'expense-month__header');
