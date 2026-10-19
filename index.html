@@ -100,6 +100,7 @@
 
   <footer class="footer">
     <button class="admin-toggle" id="adminToggle" title="Admin mode" aria-label="Toggle admin mode" aria-pressed="false">~</button>
+    <a class="admin-shortcut hidden" id="adminShortcut" href="admin/" title="Admin" aria-label="Open admin page">⋯</a>
     <div class="theme-toggle" id="themeToggle">
       <button class="theme-toggle__btn" id="themeBtn" aria-haspopup="listbox" aria-expanded="false">
         <svg id="themeIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20V2z" fill="currentColor"/></svg>
@@ -134,11 +135,13 @@
     // Admin Toggle: opens the PIN-protected admin page, or logs out
     (function() {
       var btn = document.getElementById('adminToggle');
+      var shortcut = document.getElementById('adminShortcut');
 
       function updateState() {
         var enabled = AdminAPI.isLoggedIn();
         btn.classList.toggle('admin-toggle--active', enabled);
         btn.setAttribute('aria-pressed', enabled);
+        shortcut.classList.toggle('hidden', !enabled);
       }
 
       updateState();

@@ -1369,6 +1369,33 @@ body {
   border-color: var(--color-primary-hover);
 }
 
+/* Shortcut to the admin page, shown next to "~" while logged in */
+.admin-shortcut {
+  position: absolute;
+  bottom: var(--spacing-lg);
+  right: calc(var(--spacing-lg) + 112px);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: normal;
+  color: white;
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+
+[dir="rtl"] .admin-shortcut {
+  right: auto;
+  left: calc(var(--spacing-lg) + 112px);
+}
+
+.admin-shortcut:hover {
+  background: var(--color-primary-hover);
+}
+
 /* Theme Toggle Dropdown */
 .theme-toggle {
   position: absolute;
