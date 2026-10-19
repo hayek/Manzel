@@ -281,10 +281,13 @@ const App = (function() {
       const paymentKey = residents[aptNumber - 1] || '';
       // Get display name from residents data (keyed by apartment number)
       const residentInfo = residentsData[String(aptNumber)] || {};
-      const displayName = residentInfo.displayName || paymentKey || `${I18n.t('apartment')} ${aptNumber}`;
+      // Full name: family name + first name (same order as the resident page)
+      const fullName = [residentInfo.familyName, residentInfo.firstName].filter(Boolean).join(' ');
+      const displayName = fullName || paymentKey || `${I18n.t('apartment')} ${aptNumber}`;
       const apt = {
         name: paymentKey, // Keep original name for payment lookup
         displayName: displayName,
+        owner: residentInfo.propertyOwner || '',
         number: aptNumber
       };
       const aptEl = createApartmentElement(apt, paymentsData);
@@ -311,9 +314,22 @@ const App = (function() {
     const header = document.createElement('div');
     header.className = 'apartment__header';
 
+    const nameBlock = document.createElement('div');
+    nameBlock.className = 'apartment__names';
+
     const name = document.createElement('span');
     name.className = 'apartment__name';
+    name.setAttribute('dir', 'auto');
     name.textContent = apt.displayName || apt.name;
+    nameBlock.appendChild(name);
+
+    if (apt.owner) {
+      const owner = document.createElement('span');
+      owner.className = 'apartment__owner';
+      owner.setAttribute('dir', 'auto');
+      owner.textContent = `${I18n.t('propertyOwner')}: ${apt.owner}`;
+      nameBlock.appendChild(owner);
+    }
 
     // Calculate debt
     const residentPayments = paymentsData.payments[apt.name] || {};
@@ -351,7 +367,7 @@ const App = (function() {
     number.textContent = `${I18n.t('apartment')} ${apt.number}`;
     rightSide.appendChild(number);
 
-    header.appendChild(name);
+    header.appendChild(nameBlock);
     header.appendChild(rightSide);
     aptEl.appendChild(header);
 

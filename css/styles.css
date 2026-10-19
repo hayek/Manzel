@@ -2314,3 +2314,15 @@ details[open] > .expense-month__summary .expense-month__title::before {
   height: 36px;
   cursor: pointer;
 }
+
+/* Apartment card: full name with the property owner underneath */
+.apartment__names {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.apartment__owner {
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+}
