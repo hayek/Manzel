@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Manzel - Admin</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <main class="container">
+    <!-- Header Row: Back + Language -->
+    <div class="header-row">
+      <button class="back-btn" id="backBtn">
+        <span>←</span>
+        <span data-i18n="back">חזרה</span>
+      </button>
+      <div class="lang-switcher" id="langSwitcher">
+        <button class="lang-switcher__btn" id="langBtn" aria-haspopup="listbox" aria-expanded="false">
+          <span id="langCode">HE</span>
+          <svg class="lang-switcher__arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <ul class="lang-switcher__menu" id="langMenu" role="listbox">
+          <li role="option" data-lang="he">עברית</li>
+          <li role="option" data-lang="en">English</li>
+          <li role="option" data-lang="ar">العربية</li>
+          <li role="option" data-lang="ru">Русский</li>
+          <li role="option" data-lang="uk">Українська</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- PIN Screen -->
+    <section class="admin-card admin-pin hidden" id="pinScreen">
+      <h1 class="admin-title" data-i18n="adminTitle">ניהול</h1>
+      <form id="pinForm" autocomplete="off">
+        <label class="admin-label" for="pinInput" data-i18n="adminPin">קוד גישה</label>
+        <input class="admin-input admin-input--pin" id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" required>
+        <p class="admin-error hidden" id="pinError" role="alert"></p>
+        <button type="submit" class="pay-btn admin-submit" id="pinSubmit" data-i18n="adminLogin">כניסה</button>
+      </form>
+    </section>
+
+    <!-- Admin Panel -->
+    <section class="hidden" id="adminPanel">
+      <div class="admin-top">
+        <h1 class="admin-title" data-i18n="adminTitle">ניהול</h1>
+        <button type="button" class="admin-link-btn" id="logoutBtn" data-i18n="adminLogout">יציאה</button>
+      </div>
+
+      <div class="segmented" role="tablist">
+        <button type="button" class="segmented__btn segmented__btn--active" role="tab" aria-selected="true" data-panel="monthly" data-i18n="adminMonthly">חודשי</button>
+        <button type="button" class="segmented__btn" role="tab" aria-selected="false" data-panel="project" data-i18n="adminProject">פרויקט</button>
+        <button type="button" class="segmented__btn" role="tab" aria-selected="false" data-panel="expense" data-i18n="adminExpense">הוצאה</button>
+      </div>
+
+      <div class="admin-message hidden" id="adminMessage" role="status"></div>
+
+      <!-- Monthly payment -->
+      <form class="admin-card admin-form" id="monthlyForm" data-panel="monthly">
+        <span class="admin-label" data-i18n="adminApartment">דירה</span>
+        <div class="apt-picker" id="monthlyApts"></div>
+
+        <label class="admin-label" for="monthlyYear" data-i18n="adminYear">שנה</label>
+        <select class="admin-input" id="monthlyYear"></select>
+
+        <div class="admin-row">
+          <span class="admin-label" data-i18n="adminMonths">חודשים</span>
+          <button type="button" class="admin-link-btn" id="wholeYearBtn" data-i18n="adminWholeYear">כל השנה (550 ₪)</button>
+        </div>
+        <div class="month-chips" id="monthlyMonths"></div>
+
+        <label class="admin-label" for="monthlyAmount" data-i18n="adminAmount">סכום</label>
+        <input class="admin-input" id="monthlyAmount" type="number" inputmode="decimal" min="0" step="any" value="50" required>
+
+        <button type="submit" class="pay-btn admin-submit" data-i18n="adminSave">שמירה</button>
+      </form>
+
+      <!-- Project payment -->
+      <form class="admin-card admin-form hidden" id="projectForm" data-panel="project">
+        <p class="admin-empty hidden" id="noProjects" data-i18n="adminNoProjects">אין פרויקטים פתוחים</p>
+        <div id="projectFields">
+          <label class="admin-label" for="projectSelect" data-i18n="adminProject">פרויקט</label>
+          <select class="admin-input" id="projectSelect" dir="auto"></select>
+
+          <span class="admin-label" data-i18n="adminApartment">דירה</span>
+          <div class="apt-picker" id="projectApts"></div>
+
+          <label class="admin-label" for="projectAmount" data-i18n="adminAmount">סכום</label>
+          <input class="admin-input" id="projectAmount" type="number" inputmode="decimal" min="0" step="any" required>
+
+          <label class="admin-label" for="projectDate" data-i18n="adminDate">תאריך</label>
+          <input class="admin-input" id="projectDate" type="date" required>
+
+          <span class="admin-label" data-i18n="adminMethod">אמצעי תשלום</span>
+          <div class="method-picker">
+            <label><input type="radio" name="method" value="cash" checked> <span data-i18n="methodCash">מזומן</span></label>
+            <label><input type="radio" name="method" value="bit"> <span data-i18n="methodBit">ביט</span></label>
+            <label><input type="radio" name="method" value="paybox"> <span data-i18n="methodPaybox">פייבוקס</span></label>
+          </div>
+
+          <button type="submit" class="pay-btn admin-submit" data-i18n="adminSave">שמירה</button>
+        </div>
+      </form>
+
+      <!-- Expense -->
+      <form class="admin-card admin-form hidden" id="expenseForm" data-panel="expense">
+        <label class="admin-label" for="expenseType" data-i18n="adminType">סוג הוצאה</label>
+        <input class="admin-input" id="expenseType" list="expenseTypes" dir="auto" required>
+        <datalist id="expenseTypes"></datalist>
+
+        <label class="admin-label" for="expenseAmount" data-i18n="adminAmount">סכום</label>
+        <input class="admin-input" id="expenseAmount" type="number" inputmode="decimal" min="0" step="any" required>
+
+        <label class="admin-label" for="expenseDate" data-i18n="adminDate">תאריך</label>
+        <input class="admin-input" id="expenseDate" type="date" required>
+
+        <label class="admin-label" for="expenseReceipt" data-i18n="adminReceipt">קישור לקבלה (לא חובה)</label>
+        <input class="admin-input" id="expenseReceipt" type="url" dir="ltr" placeholder="https://">
+
+        <button type="submit" class="pay-btn admin-submit" data-i18n="adminSave">שמירה</button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer">
+  </footer>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/projects.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/admin-api.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    (function(){var t=localStorage.getItem('manzel_theme');if(t&&t!=='auto')document.documentElement.setAttribute('data-theme',t);})();
+  </script>
+</body>
+</html>

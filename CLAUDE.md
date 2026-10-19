@@ -53,6 +53,9 @@ const ModuleName = (function() {
 - **ExpensePage** (`js/expense.js`) - Expense detail view
 - **Projects** (`js/projects.js`) - Pure parsing/status logic for building projects (Node-testable; shared by all pages)
 - **ProjectPage** (`js/project.js`) - Project detail view
+- **Expenses** (`js/expenses.js`) - Pure grouping of expenses by month (date parsed from the notes column)
+- **AdminAPI** (`js/admin-api.js`) - Client for the Apps Script web app (login with PIN, write actions)
+- **AdminPage** (`js/admin.js`) - Admin page: monthly payments, project payments, expenses
 
 ### Pages
 - `index.html` - Main dashboard with building visualization
@@ -60,6 +63,14 @@ const ModuleName = (function() {
 - `expense.html` - Expense details
 - `payment.html` - Payment methods and options (BIT, Paybox, cash)
 - `project.html?id=<project id>` - Building project: collected vs. goal and per-apartment payments
+- `admin/index.html` - PIN-protected admin page (opened from the footer "~" button or `/admin`)
+
+### Writing to the sheet (admin)
+- The site itself is read-only. Writes go through a Google Apps Script web app bound to the spreadsheet: `apps-script/Code.gs` (doPost) + `apps-script/Logic.gs` (pure, Node-tested). See `apps-script/README.md` for deploy steps.
+- The PIN lives only in the script's Script Property `ADMIN_PIN` - **never put it in this repo** (the repo is public).
+- 5 wrong PINs lock the endpoint (10 min, doubling, max 24 h). Delete Script Property `ADMIN_LOCK` to unlock by hand.
+- After changing `apps-script/*.gs`, paste into the Apps Script editor and use Deploy → Manage deployments → Edit → New version so the `/exec` URL stays the same.
+- `total!A2` is `=SUM(Payments!B2:J)+SUM(Expence!B2:B)` (open-ended ranges so new rows count).
 
 ## Data Source
 
@@ -118,7 +129,7 @@ Project money is separate from the maintenance fund: it never affects the total,
 - Language and theme dropdowns with proper listbox semantics
 
 ### Admin Mode
-- Hidden admin mode enabled via browser console: `localStorage.setItem('manzel_admin', 'true')`
+- Turned on by logging in with the PIN (footer "~" button → admin page). `AdminAPI.isLoggedIn()` = `localStorage.manzel_admin === 'true'` plus the PIN in `sessionStorage` for this session.
 - Shows action buttons on resident page when debt exists:
   - Copy debt message (localized, includes unpaid months and link)
   - Send via WhatsApp (uses phone from Residents sheet)
