@@ -82,15 +82,35 @@ function planMonthly(values, request) {
 }
 
 /**
- * First empty row in column A after the header (ignores pre-formatted empty rows below the data)
- * @param {Array} columnA - Column A values including the header
+ * First fully empty row after the header (ignores pre-formatted empty rows below the data,
+ * and never lands on a hand-edited row that has data in any column)
+ * @param {Array<Array>} rows - Values of the columns being written, including the header
  * @returns {number} 1-based sheet row
  */
-function firstEmptyRow(columnA) {
-  for (let i = 1; i < columnA.length; i++) {
-    if (isEmpty(columnA[i]) || String(columnA[i]).trim() === '') return i + 1;
+function firstEmptyRow(rows) {
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i].every(cell => isEmpty(cell) || String(cell).trim() === '')) return i + 1;
   }
-  return columnA.length + 1;
+  return rows.length + 1;
+}
+
+/**
+ * Keep user text as plain text: Sheets reads a leading = + - @ as a formula
+ * @param {*} value - Text typed in the admin page
+ * @returns {string} Trimmed text, prefixed with ' when needed
+ */
+function plainText(value) {
+  const text = String(value || '').trim();
+  return /^[=+\-@]/.test(text) ? `'${text}` : text;
+}
+
+/**
+ * Cache key for a client request id, used to ignore a retried request
+ * @param {*} requestId - Id sent by the admin page
+ * @returns {string|null} Cache key, or null if the id is missing or malformed
+ */
+function requestCacheKey(requestId) {
+  return /^[A-Za-z0-9-]{16,64}$/.test(String(requestId || '')) ? `req:${requestId}` : null;
 }
 
 /**
@@ -111,7 +131,7 @@ function parseIsoDate(text) {
  * @returns {Array} Row values for columns A-D
  */
 function buildExpenseRow(request) {
-  return [String(request.type).trim(), -Math.abs(Number(request.amount)), String(request.receipt || '').trim(), parseIsoDate(request.date)];
+  return [plainText(request.type), -Math.abs(Number(request.amount)), plainText(request.receipt), parseIsoDate(request.date)];
 }
 
 /**
@@ -123,7 +143,7 @@ function buildProjectRow(request) {
   const [year, month, day] = String(request.date).split('-');
   const method = String(request.method || '').toLowerCase();
   return [
-    String(request.projectId).trim(),
+    plainText(request.projectId),
     Number(request.apartment),
     Number(request.amount),
     `${day}/${month}/${year}`,
@@ -220,6 +240,8 @@ if (typeof module !== 'undefined') {
     findPaymentRow,
     planMonthly,
     firstEmptyRow,
+    plainText,
+    requestCacheKey,
     parseIsoDate,
     buildExpenseRow,
     buildProjectRow,

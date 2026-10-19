@@ -59,6 +59,12 @@ test('call posts the stored PIN and payload with no custom headers', async () =>
   assert.deepEqual(JSON.parse(options.body), { type: 'מנקה', amount: 50, date: '2026-10-18', pin: '4321', action: 'expense' });
 });
 
+test('call sends the request id so a retry is not saved twice', async () => {
+  respondWith({ ok: true });
+  await AdminAPI.call('expense', { type: 'x' }, 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d');
+  assert.equal(JSON.parse(requests[0].options.body).requestId, 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d');
+});
+
 test('a successful call clears the public data cache; a failed one does not', async () => {
   sessionStorage.setItem('manzel_data_v6', 'cached');
   respondWith({ ok: false, error: 'invalid' });

@@ -124,6 +124,27 @@
   </main>
 
   <footer class="footer">
+    <div class="theme-toggle" id="themeToggle">
+      <button class="theme-toggle__btn" id="themeBtn" aria-haspopup="listbox" aria-expanded="false">
+        <svg id="themeIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20V2z" fill="currentColor"/></svg>
+        <span id="themeLabel" data-i18n="themeAuto">Auto</span>
+        <svg class="theme-toggle__arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+      </button>
+      <ul class="theme-toggle__menu" id="themeMenu" role="listbox">
+        <li role="option" data-theme="light">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <span data-i18n="themeLight">Light</span>
+        </li>
+        <li role="option" data-theme="auto">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20V2z" fill="currentColor"/></svg>
+          <span data-i18n="themeAuto">Auto</span>
+        </li>
+        <li role="option" data-theme="dark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <span data-i18n="themeDark">Dark</span>
+        </li>
+      </ul>
+    </div>
   </footer>
 
   <script src="../js/i18n.js"></script>
@@ -131,8 +152,6 @@
   <script src="../js/api.js"></script>
   <script src="../js/admin-api.js"></script>
   <script src="../js/admin.js"></script>
-  <script>
-    (function(){var t=localStorage.getItem('manzel_theme');if(t&&t!=='auto')document.documentElement.setAttribute('data-theme',t);})();
-  </script>
+  <script src="../js/theme.js"></script>
 </body>
 </html>

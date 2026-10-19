@@ -52,10 +52,15 @@ test('planMonthly can write a 0 discount into an empty cell', () => {
   assert.deepEqual(plan.writes, [{ row: 3, col: 4, value: 0 }]);
 });
 
-test('firstEmptyRow skips past real rows and ignores pre-formatted empty rows', () => {
-  assert.equal(Logic.firstEmptyRow(['סוג', 'מנקה', 'חשמל', '', '', null]), 4);
-  assert.equal(Logic.firstEmptyRow(['h', 'a']), 3);
-  assert.equal(Logic.firstEmptyRow(['h']), 2);
+test('firstEmptyRow returns the first fully empty row after the header', () => {
+  assert.equal(Logic.firstEmptyRow([['סוג', 'כמות'], ['מנקה', -50], ['חשמל', -90], ['', ''], [null, '']]), 4);
+  assert.equal(Logic.firstEmptyRow([['h', 'x'], ['a', 1]]), 3);
+  assert.equal(Logic.firstEmptyRow([['h', 'x']]), 2);
+});
+
+test('firstEmptyRow skips rows that have data in any column, even with an empty first cell', () => {
+  assert.equal(Logic.firstEmptyRow([['h', 'x', 'y'], ['', -50, ''], ['', '', ''], ['a', 1, 2]]), 3);
+  assert.equal(Logic.firstEmptyRow([['h', 'x'], ['  ', 5], ['', '']]), 3);
 });
 
 test('buildExpenseRow stores the amount negative and the date as a real date', () => {
@@ -116,4 +121,19 @@ test('lockout resets after a correct PIN and is capped at 24 hours', () => {
 test('timeZoneError blocks writes when the script and spreadsheet time zones differ', () => {
   assert.equal(Logic.timeZoneError('Asia/Jerusalem', 'Asia/Jerusalem'), null);
   assert.match(Logic.timeZoneError('Asia/Jerusalem', 'America/New_York'), /time zone/i);
+});
+
+test('text that a sheet would read as a formula is stored as plain text', () => {
+  assert.equal(Logic.buildExpenseRow({ type: '=HYPERLINK("x")', amount: 5, date: '2026-10-18' })[0], "'=HYPERLINK(\"x\")");
+  assert.equal(Logic.buildExpenseRow({ type: '+972', amount: 5, date: '2026-10-18' })[0], "'+972");
+  assert.equal(Logic.buildExpenseRow({ type: 'מנקה', amount: 5, date: '2026-10-18', receipt: '@x' })[2], "'@x");
+  assert.equal(Logic.buildExpenseRow({ type: 'מנקה', amount: 5, date: '2026-10-18' })[0], 'מנקה');
+  assert.equal(Logic.buildProjectRow({ projectId: '-p', apartment: 1, amount: 1, date: '2026-10-05', method: 'cash' })[0], "'-p");
+});
+
+test('requestCacheKey accepts client request ids and rejects junk', () => {
+  assert.equal(Logic.requestCacheKey('a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d'), 'req:a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d');
+  assert.equal(Logic.requestCacheKey(undefined), null);
+  assert.equal(Logic.requestCacheKey('short'), null);
+  assert.equal(Logic.requestCacheKey('bad id with spaces!!'), null);
 });

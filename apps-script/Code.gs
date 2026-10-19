@@ -60,9 +60,19 @@ function handle(request) {
   const tzError = timeZoneError(Session.getScriptTimeZone(), SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone());
   if (tzError) return { ok: false, error: 'server', message: tzError };
 
-  if (request.action === 'monthly') return writeMonthly(request);
-  if (request.action === 'project') return writeProject(request);
-  return writeExpense(request);
+  // A retried request (same id) returns the first result instead of writing again
+  const cache = CacheService.getScriptCache();
+  const cacheKey = requestCacheKey(request.requestId);
+  const previous = cacheKey && cache.get(cacheKey);
+  if (previous) return JSON.parse(previous);
+
+  let result;
+  if (request.action === 'monthly') result = writeMonthly(request);
+  else if (request.action === 'project') result = writeProject(request);
+  else result = writeExpense(request);
+
+  if (cacheKey && result.ok) cache.put(cacheKey, JSON.stringify(result), 6 * 60 * 60);
+  return result;
 }
 
 /**
@@ -92,7 +102,7 @@ function writeMonthly(request) {
  */
 function writeProject(request) {
   const sheet = getSheet('ProjectPayments');
-  const row = firstEmptyRow(sheet.getRange(1, 1, Math.max(sheet.getLastRow(), 1), 1).getValues().map(r => r[0]));
+  const row = firstEmptyRow(sheet.getRange(1, 1, Math.max(sheet.getLastRow(), 1), 5).getValues());
   sheet.getRange(row, 4).setNumberFormat('@');
   sheet.getRange(row, 1, 1, 5).setValues([buildProjectRow(request)]);
   return { ok: true, message: `Added project payment in row ${row}`, row };
@@ -105,7 +115,7 @@ function writeProject(request) {
  */
 function writeExpense(request) {
   const sheet = getSheet('Expence');
-  const row = firstEmptyRow(sheet.getRange(1, 1, Math.max(sheet.getLastRow(), 1), 1).getValues().map(r => r[0]));
+  const row = firstEmptyRow(sheet.getRange(1, 1, Math.max(sheet.getLastRow(), 1), 4).getValues());
   sheet.getRange(row, 1, 1, 4).setValues([buildExpenseRow(request)]);
   return { ok: true, message: `Added expense in row ${row}`, row };
 }
