@@ -2143,6 +2143,7 @@ body {
 .method-picker label:has(input:checked) {
   border-color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+}
 
 /* Expenses grouped by month */
 .expense-month {
