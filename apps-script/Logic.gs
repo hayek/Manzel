@@ -154,6 +154,17 @@ function buildProjectRow(request) {
 }
 
 /**
+ * Build a ProjectExpenses row (money paid out of a project); the date is text dd/mm/yyyy
+ * @param {Object} request - { projectId, amount, date (yyyy-mm-dd), type }
+ * @param {string} receiptUrl - Drive link, or ''
+ * @returns {Array} Row values for columns A-E
+ */
+function buildProjectExpenseRow(request, receiptUrl) {
+  const [year, month, day] = String(request.date).split('-');
+  return [plainText(request.projectId), Math.abs(Number(request.amount)), `${day}/${month}/${year}`, plainText(request.type), receiptUrl || ''];
+}
+
+/**
  * Validate a request payload
  * @param {string} action - monthly | project | expense
  * @param {Object} p - Payload
@@ -181,7 +192,8 @@ function validate(action, p) {
     if (!parseIsoDate(p.date)) return 'invalid date';
     return null;
   }
-  if (action === 'expense') {
+  if (action === 'expense' || action === 'projectExpense') {
+    if (action === 'projectExpense' && !isText(p.projectId)) return 'missing project';
     if (!isText(p.type)) return 'missing type';
     if (typeof p.amount !== 'number' || !(p.amount > 0)) return 'invalid amount';
     if (!parseIsoDate(p.date)) return 'invalid date';
@@ -272,6 +284,7 @@ if (typeof module !== 'undefined') {
     parseIsoDate,
     buildExpenseRow,
     buildProjectRow,
+    buildProjectExpenseRow,
     validate,
     validateReceipt,
     receiptFileName,

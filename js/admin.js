@@ -176,6 +176,7 @@ const AdminPage = (function() {
     renderMonths();
     renderProjects();
     renderExpenseTypes();
+    renderExpenseFrom();
 
     const today = todayIso();
     document.getElementById('projectDate').value = today;
@@ -381,6 +382,21 @@ const AdminPage = (function() {
   }
 
   /**
+   * Fill the "paid from" picker: the building fund, then each open project
+   */
+  function renderExpenseFrom() {
+    const select = document.getElementById('expenseFrom');
+    const previous = select.value;
+    while (select.options.length > 1) select.remove(1);
+    data.projects.filter(project => project.status === 'open').forEach(project => {
+      const option = el('option', '', project.name);
+      option.value = project.id;
+      select.appendChild(option);
+    });
+    select.value = [...select.options].some(option => option.value === previous) ? previous : '';
+  }
+
+  /**
    * Fill the expense type suggestions from existing expenses
    */
   function renderExpenseTypes() {
@@ -464,9 +480,13 @@ const AdminPage = (function() {
     e.preventDefault();
     const type = document.getElementById('expenseType').value.trim();
     const amount = Number(document.getElementById('expenseAmount').value);
+    const projectId = document.getElementById('expenseFrom').value;
+    const project = data.projects.find(p => p.id === projectId);
     const payload = { type, amount, date: document.getElementById('expenseDate').value };
+    if (projectId) payload.projectId = projectId;
     if (receiptFile) payload.receiptFile = receiptFile;
-    const result = await submit(e.target, 'expense', payload);
+    // Money from a project's pot goes to ProjectExpenses, otherwise to the building fund's Expence tab
+    const result = await submit(e.target, projectId ? 'projectExpense' : 'expense', payload);
     if (!result.ok) return;
 
     const hasReceipt = Boolean(receiptFile);
@@ -474,7 +494,8 @@ const AdminPage = (function() {
     clearReceipt();
     await reloadData(true);
     document.getElementById('expenseDate').value = todayIso();
-    showMessage(`${I18n.t('adminSaved')} · ${type} · ${formatNumber(amount)} ₪${hasReceipt ? ' · 📎' : ''}`, false);
+    const from = project ? ` · ${project.name}` : '';
+    showMessage(`${I18n.t('adminSaved')}${from} · ${type} · ${formatNumber(amount)} ₪${hasReceipt ? ' · 📎' : ''}`, false);
   }
 
   /**

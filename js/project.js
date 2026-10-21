@@ -31,10 +31,11 @@ const ProjectPage = (function() {
 
       // Building order: top floor first
       const floorApts = data.building.flatMap(floor => floor.apartments);
-      const summary = Projects.summarize(project, data.projectPayments, [...floorApts].sort((a, b) => a - b));
+      const summary = Projects.summarize(project, data.projectPayments, [...floorApts].sort((a, b) => a - b), data.projectExpenses);
 
       renderSummary(summary);
       renderApartments(summary, floorApts, data);
+      renderExpenses(summary);
     } catch (error) {
       console.error('Failed to load project:', error);
       showError();
@@ -97,8 +98,57 @@ const ProjectPage = (function() {
         .replace('{amount}', formatNumber(project.totalCost));
     }
 
+    if (summary.paidOut > 0) {
+      const cost = project.totalCost || summary.goal;
+      document.getElementById('projectPaidToContractor').textContent = I18n.t('projectPaidToContractor')
+        .replace('{paid}', formatNumber(summary.paidOut))
+        .replace('{total}', formatNumber(cost));
+      document.getElementById('projectPayoutFill').style.width = `${Math.min(1, cost ? summary.paidOut / cost : 0) * 100}%`;
+      document.getElementById('projectBalance').textContent = I18n.t('projectBalance')
+        .replace('{amount}', formatNumber(summary.balance));
+      document.getElementById('projectPayout').classList.remove('hidden');
+    }
+
     document.getElementById('projectLoading').classList.add('hidden');
     document.getElementById('projectContent').classList.remove('hidden');
+  }
+
+  /**
+   * Render the money paid out of the project (newest first)
+   * @param {Object} summary - Result of Projects.summarize()
+   */
+  function renderExpenses(summary) {
+    if (summary.expenses.length === 0) return;
+
+    const list = document.getElementById('projectExpensesList');
+    list.innerHTML = '';
+    [...summary.expenses].reverse().forEach(expense => {
+      const item = el('li', 'expense-item');
+      item.appendChild(el('span', 'expense-item__icon', '🏗️'));
+
+      const body = el('span', 'expense-item__body');
+      const description = el('span', 'expense-item__type', expense.description || '-');
+      description.setAttribute('dir', 'auto');
+      body.appendChild(description);
+      const details = el('span', 'expense-item__notes', expense.date);
+      if (expense.receipt) {
+        const link = el('a', 'project-expense__receipt', I18n.t('viewReceipt'));
+        link.href = expense.receipt;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        details.appendChild(document.createTextNode(expense.date ? ' · ' : ''));
+        details.appendChild(link);
+      }
+      body.appendChild(details);
+      item.appendChild(body);
+
+      const amount = el('span', 'expense-item__amount', `${formatNumber(-expense.amount)} ₪`);
+      amount.setAttribute('dir', 'ltr');
+      item.appendChild(amount);
+      list.appendChild(item);
+    });
+
+    document.getElementById('projectExpensesSection').classList.remove('hidden');
   }
 
   /**

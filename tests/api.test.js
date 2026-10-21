@@ -62,6 +62,7 @@ test('loads projects and payments when the tabs exist', async () => {
   assert.equal(requested.find(r => r.sheet === 'Projects').headers, '1');
   assert.equal(requested.find(r => r.sheet === 'ProjectPayments').headers, '1');
   assert.equal(requested.some(r => r.sheet === 'Announcement'), false);
+  assert.equal(requested.find(r => r.sheet === 'ProjectExpenses').headers, '1');
   assert.equal('announcement' in data, false);
 });
 
@@ -111,4 +112,17 @@ test('getResidentData lists open projects and any project the apartment still ow
   assert.equal(roof.payments[0].method, 'bit');
   assert.equal(oldOwed.status, 'unpaid');
   assert.equal(oldOwed.remaining, 200);
+});
+
+test('loads project expenses, and a missing tab gives none', async () => {
+  installFetch({
+    ...BASE_TABS,
+    ProjectExpenses: table(Projects.EXPENSE_HEADERS, [['roof-stairs-2026', 5000, '21/10/2026', 'תשלום לקבלן', '']])
+  });
+  const data = await SheetsAPI.fetchAllData(true);
+  assert.equal(data.projectExpenses.length, 1);
+  assert.equal(data.projectExpenses[0].amount, 5000);
+
+  installFetch(BASE_TABS);
+  assert.deepEqual((await SheetsAPI.fetchAllData(true)).projectExpenses, []);
 });

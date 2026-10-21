@@ -83,6 +83,7 @@ Google Sheets API via Google Visualization API. The site reads these sheets:
 - `Residents` - Apartment details: apartment number, family name, first name, property owner, phone
 - `Projects` - One row per building project: `id | name | description | per_apartment | total_cost | due_date | status` (`open`/`done`)
 - `ProjectPayments` - One row per payment: `project_id | apartment | amount | date | method` (`cash`/`bit`/`paybox`, empty = cash; split payments add up)
+- `ProjectExpenses` - Money paid out of a project's pot (e.g. the contractor): `project_id | amount | date | description | receipt`. The site shows paid out and balance (collected − paid out).
 
 The spreadsheet is also connected to a Glide app - never modify existing tabs.
 
@@ -110,7 +111,7 @@ Project money is separate from the maintenance fund: it never affects the total,
 
 ### Caching
 - Session storage with 5-minute TTL
-- Cache key: `manzel_data_v6` (bump when the cached data shape changes)
+- Cache key: `manzel_data_v7` (bump when the cached data shape changes)
 - Force refresh available via `SheetsAPI.fetchAllData(true)`
 
 ### Theming

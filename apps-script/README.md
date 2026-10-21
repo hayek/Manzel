@@ -22,4 +22,5 @@ To update the code later, use **Deploy → Manage deployments → Edit → Versi
 - Five wrong PINs lock the endpoint for 10 minutes, then 20, 40 … up to 24 hours. A correct PIN resets the lock. Lock state is in Script Property `ADMIN_LOCK`; delete that property to unlock by hand.
 - `monthly` never overwrites a filled `Payments` cell, and fails with `missing_year` if the year's rows don't exist.
 - `project` and `expense` append on the first fully empty row. `expense` writes columns A–D only.
+- `projectExpense` records money paid out of a project's pot into the `ProjectExpenses` tab (`project_id | amount | date | description | receipt`); same receipt upload as `expense`.
 - An expense can carry a receipt photo/PDF (`receiptFile`, base64, max 10 MB). It is saved to the Drive folder "Manzel receipts" (id in Script Property `RECEIPTS_FOLDER_ID`, created on first use), shared as anyone-with-link can view, and its link goes into the receipt column. This needs Drive access: approve Google's prompt again after deploying.

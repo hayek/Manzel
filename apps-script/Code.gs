@@ -71,6 +71,7 @@ function handle(request) {
   let result;
   if (request.action === 'monthly') result = writeMonthly(request);
   else if (request.action === 'project') result = writeProject(request);
+  else if (request.action === 'projectExpense') result = writeProjectExpense(request);
   else result = writeExpense(request);
 
   if (cacheKey && result.ok) cache.put(cacheKey, JSON.stringify(result), 6 * 60 * 60);
@@ -121,6 +122,20 @@ function writeExpense(request) {
   const row = firstEmptyRow(sheet.getRange(1, 1, Math.max(sheet.getLastRow(), 1), 4).getValues());
   sheet.getRange(row, 1, 1, 4).setValues([buildExpenseRow({ ...request, receipt })]);
   return { ok: true, message: `Added expense in row ${row}`, row, receipt: receipt || '' };
+}
+
+/**
+ * Append money paid out of a project's pot to ProjectExpenses (columns A-E)
+ * @param {Object} request - { projectId, type, amount, date, receiptFile? }
+ * @returns {Object} Response with the sheet row and receipt link
+ */
+function writeProjectExpense(request) {
+  const receipt = request.receiptFile ? uploadReceipt(request) : '';
+  const sheet = getSheet('ProjectExpenses');
+  const row = firstEmptyRow(sheet.getRange(1, 1, Math.max(sheet.getLastRow(), 1), 5).getValues());
+  sheet.getRange(row, 3).setNumberFormat('@');
+  sheet.getRange(row, 1, 1, 5).setValues([buildProjectExpenseRow(request, receipt)]);
+  return { ok: true, message: `Added project expense in row ${row}`, row, receipt };
 }
 
 /**
