@@ -2389,3 +2389,24 @@ details[open] > .expense-month__summary .expense-month__title::before {
   color: var(--color-primary);
   text-decoration: none;
 }
+
+/* Paid-out marker on a project's collected bar */
+.progress:has(.progress__tick) {
+  position: relative;
+  overflow: visible;
+}
+
+.progress:has(.progress__tick) .progress__fill {
+  border-radius: 4px;
+}
+
+.progress__tick {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  margin-inline-start: -1.5px;
+  border-radius: 2px;
+  background: var(--color-text);
+  box-shadow: 0 0 0 1px var(--color-surface);
+}

@@ -87,6 +87,17 @@ const ProjectPage = (function() {
     const ratio = summary.goal ? summary.collected / summary.goal : 0;
     document.getElementById('projectProgressFill').style.width = `${Math.min(1, ratio) * 100}%`;
 
+    // Marker on the collected bar: how much of it was already paid out
+    if (summary.paidOut > 0 && summary.goal) {
+      const tick = el('span', 'progress__tick');
+      tick.style.insetInlineStart = `${Math.min(1, summary.paidOut / summary.goal) * 100}%`;
+      const label = I18n.t('projectPaidOut').replace('{amount}', formatNumber(summary.paidOut));
+      tick.title = label;
+      tick.setAttribute('aria-label', label);
+      tick.setAttribute('role', 'img');
+      document.getElementById('projectProgress').appendChild(tick);
+    }
+
     document.getElementById('projectPaidOf').textContent = I18n.t('paidOf')
       .replace('{paid}', summary.paidCount)
       .replace('{total}', summary.aptCount);

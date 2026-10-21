@@ -143,7 +143,11 @@ const App = (function() {
     header.appendChild(due);
     card.appendChild(header);
 
-    card.appendChild(createProgressBar(summary.goal ? summary.collected / summary.goal : 0));
+    const bar = createProgressBar(summary.goal ? summary.collected / summary.goal : 0);
+    if (summary.paidOut > 0 && summary.goal) {
+      bar.appendChild(createPaidOutTick(summary.paidOut / summary.goal, summary.paidOut));
+    }
+    card.appendChild(bar);
 
     const meta = el('div', 'project-card__meta');
     meta.appendChild(el('span', '', I18n.t('projectCollected')
@@ -214,6 +218,22 @@ const App = (function() {
     fill.style.width = `${Math.min(1, Math.max(0, ratio)) * 100}%`;
     bar.appendChild(fill);
     return bar;
+  }
+
+  /**
+   * Marker on a progress bar showing how much was paid out of the pot
+   * @param {number} ratio - Paid out / goal (0-1)
+   * @param {number} amount - Paid out in ₪
+   * @returns {HTMLElement} Tick element
+   */
+  function createPaidOutTick(ratio, amount) {
+    const tick = el('span', 'progress__tick');
+    tick.style.insetInlineStart = `${Math.min(1, Math.max(0, ratio)) * 100}%`;
+    const label = I18n.t('projectPaidOut').replace('{amount}', formatNumber(amount));
+    tick.title = label;
+    tick.setAttribute('aria-label', label);
+    tick.setAttribute('role', 'img');
+    return tick;
   }
 
   /**
