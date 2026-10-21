@@ -51,6 +51,13 @@
           <span id="projectPerApartment"></span>
         </div>
         <p class="project-hero__cost" id="projectTotalCost"></p>
+        <div class="project-hero__payout hidden" id="projectPayout">
+          <p class="project-hero__payout-label" id="projectPaidToContractor"></p>
+          <div class="progress">
+            <div class="progress__fill" id="projectPayoutFill"></div>
+          </div>
+          <p class="project-hero__balance" id="projectBalance"></p>
+        </div>
         <a href="payment.html" class="pay-btn" data-i18n="payNow">לתשלום</a>
       </div>
     </section>
@@ -61,6 +68,12 @@
       <ul class="project-apartments" id="projectApartments">
         <!-- Apartments will be rendered here by JavaScript -->
       </ul>
+    </section>
+
+    <!-- Money paid out of the project -->
+    <section class="project-expenses-section hidden" id="projectExpensesSection">
+      <h2 class="section-title" data-i18n="projectExpensesTitle">תשלומים מקופת הפרויקט</h2>
+      <ul class="expenses-card expense-list" id="projectExpensesList"></ul>
     </section>
 
     <!-- Not Found -->

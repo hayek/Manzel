@@ -19,7 +19,7 @@ const App = (function() {
       // Render all sections
       renderTotal(appData.total);
       renderMonthProgress(appData.building, appData.payments);
-      renderProjects(appData.projects, appData.projectPayments, appData.building);
+      renderProjects(appData.projects, appData.projectPayments, appData.projectExpenses, appData.building);
       renderBuilding(appData.building, appData.payments, appData.residents);
       renderExpenses(appData.expenses);
 
@@ -80,9 +80,10 @@ const App = (function() {
    * Render the projects section
    * @param {Array} projects - Projects from the Projects sheet
    * @param {Array} payments - Payments from the ProjectPayments sheet
+   * @param {Array} expenses - Money paid out, from the ProjectExpenses sheet
    * @param {Array} floors - Building floors data
    */
-  function renderProjects(projects, payments, floors) {
+  function renderProjects(projects, payments, expenses, floors) {
     if (!projects || projects.length === 0) return;
 
     const apts = getAptNumbers(floors);
@@ -91,7 +92,7 @@ const App = (function() {
 
     projects
       .filter(project => project.status === 'open')
-      .forEach(project => list.appendChild(createProjectCard(Projects.summarize(project, payments, apts))));
+      .forEach(project => list.appendChild(createProjectCard(Projects.summarize(project, payments, apts, expenses))));
 
     const done = projects.filter(project => project.status === 'done');
     if (done.length > 0) {
@@ -152,6 +153,13 @@ const App = (function() {
       .replace('{paid}', summary.paidCount)
       .replace('{total}', summary.aptCount)));
     card.appendChild(meta);
+
+    if (summary.paidOut > 0) {
+      const money = el('div', 'project-card__meta project-card__meta--money');
+      money.appendChild(el('span', '', I18n.t('projectPaidOut').replace('{amount}', formatNumber(summary.paidOut))));
+      money.appendChild(el('span', 'project-card__balance', I18n.t('projectBalance').replace('{amount}', formatNumber(summary.balance))));
+      card.appendChild(money);
+    }
 
     const dots = el('div', 'apt-dots');
     Object.keys(summary.apartments).forEach(apt => {

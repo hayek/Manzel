@@ -160,3 +160,20 @@ test('validate rejects receipts of other types, empty, or over 10 MB', () => {
   assert.notEqual(Logic.validate('expense', { ...base, receiptFile: { mimeType: 'image/jpeg', data: 'A'.repeat(14 * 1024 * 1024) } }), null);
   assert.notEqual(Logic.validate('expense', { ...base, receiptFile: { mimeType: 'image/jpeg', data: 'not base64!' } }), null);
 });
+
+test('buildProjectExpenseRow writes the date as text and keeps text plain', () => {
+  assert.deepEqual(
+    Logic.buildProjectExpenseRow({ projectId: 'roof-stairs-2026', amount: 5000, date: '2026-10-21', type: 'תשלום לקבלן' }, 'https://drive/x'),
+    ['roof-stairs-2026', 5000, '21/10/2026', 'תשלום לקבלן', 'https://drive/x']
+  );
+  assert.equal(Logic.buildProjectExpenseRow({ projectId: 'p', amount: 1, date: '2026-10-21', type: '=X' }, '')[3], "'=X");
+});
+
+test('validate checks project expenses like expenses, plus the project', () => {
+  const base = { projectId: 'roof-stairs-2026', type: 'תשלום לקבלן', amount: 5000, date: '2026-10-21' };
+  assert.equal(Logic.validate('projectExpense', base), null);
+  assert.equal(Logic.validate('projectExpense', { ...base, receiptFile: JPEG }), null);
+  assert.notEqual(Logic.validate('projectExpense', { ...base, projectId: '' }), null);
+  assert.notEqual(Logic.validate('projectExpense', { ...base, amount: 0 }), null);
+  assert.notEqual(Logic.validate('projectExpense', { ...base, receiptFile: { mimeType: 'text/html', data: 'eA==' } }), null);
+});

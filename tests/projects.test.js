@@ -161,3 +161,40 @@ test('parseDate rejects impossible dates such as US-style 10/25/2026', () => {
   assert.equal(Projects.parseDate('31/02/2026'), null);
   assert.equal(Projects.parseDate('2026-13-01'), null);
 });
+
+const EXPENSE_COLS = ['project_id', 'amount', 'date', 'description', 'receipt'];
+
+test('parseProjectExpenses reads payouts and ignores the Payments fallback tab', () => {
+  assert.deepEqual(Projects.parseProjectExpenses(PAYMENTS_TAB), []);
+  const rows = [
+    ['roof-stairs-2026', '5,000', '21/10/2026', 'תשלום לקבלן', ''],
+    ['', 100, '', 'no project', ''],
+    ['roof-stairs-2026', 0, '', 'zero', '']
+  ];
+  assert.deepEqual(Projects.parseProjectExpenses({ cols: EXPENSE_COLS, rows }), [
+    { projectId: 'roof-stairs-2026', amount: 5000, date: '21/10/2026', description: 'תשלום לקבלן', receipt: '' }
+  ]);
+});
+
+test('summarize adds paid out and balance from the project expenses', () => {
+  const [project] = Projects.parseProjects({ cols: PROJECT_COLS, rows: [ROOF] });
+  const payments = [{ projectId: project.id, apartment: 1, amount: 1700 }, { projectId: project.id, apartment: 2, amount: 1000 }];
+  const expenses = [
+    { projectId: project.id, amount: 1500, date: '20/10/2026', description: 'a', receipt: '' },
+    { projectId: project.id, amount: 500, date: '21/10/2026', description: 'b', receipt: '' },
+    { projectId: 'other', amount: 999, date: '', description: '', receipt: '' }
+  ];
+  const s = Projects.summarize(project, payments, APTS, expenses);
+  assert.equal(s.collected, 2700);
+  assert.equal(s.paidOut, 2000);
+  assert.equal(s.balance, 700);
+  assert.deepEqual(s.expenses.map(e => e.description), ['a', 'b']);
+});
+
+test('summarize without expenses has nothing paid out', () => {
+  const [project] = Projects.parseProjects({ cols: PROJECT_COLS, rows: [ROOF] });
+  const s = Projects.summarize(project, [], APTS);
+  assert.equal(s.paidOut, 0);
+  assert.equal(s.balance, 0);
+  assert.deepEqual(s.expenses, []);
+});

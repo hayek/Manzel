@@ -5,7 +5,7 @@
 
 const SheetsAPI = (function() {
   const SPREADSHEET_ID = '1_zdYPJNYSifPeQPI5CtqhfnvgzOFgxjOUe0jJDVzo1c';
-  const CACHE_KEY = 'manzel_data_v6'; // Updated to include Projects and ProjectPayments
+  const CACHE_KEY = 'manzel_data_v7'; // Updated to include ProjectExpenses
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   /**
@@ -136,14 +136,15 @@ const SheetsAPI = (function() {
       if (cached) return cached;
     }
 
-    const [payments, total, expenses, building, residents, projects, projectPayments] = await Promise.all([
+    const [payments, total, expenses, building, residents, projects, projectPayments, projectExpenses] = await Promise.all([
       fetchSheet('Payments'),
       fetchSheet('total'),
       fetchSheet('Expence'),
       fetchSheet('building'),
       fetchSheet('Residents'),
       fetchOptionalSheet('Projects', 1),
-      fetchOptionalSheet('ProjectPayments', 1)
+      fetchOptionalSheet('ProjectPayments', 1),
+      fetchOptionalSheet('ProjectExpenses', 1)
     ]);
 
     const data = {
@@ -153,7 +154,8 @@ const SheetsAPI = (function() {
       building: processBuilding(building),
       residents: processResidents(residents),
       projects: Projects.parseProjects(projects),
-      projectPayments: Projects.parsePayments(projectPayments)
+      projectPayments: Projects.parsePayments(projectPayments),
+      projectExpenses: Projects.parseProjectExpenses(projectExpenses)
     };
 
     setCachedData(data);

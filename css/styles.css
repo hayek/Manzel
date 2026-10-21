@@ -2353,3 +2353,39 @@ details[open] > .expense-month__summary .expense-month__title::before {
   font-size: 0.6875rem;
   color: var(--color-text-secondary);
 }
+
+/* Project money paid out */
+.project-card__meta--money {
+  margin-top: 2px;
+}
+
+.project-card__balance {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.project-hero__payout {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-gray-200);
+}
+
+.project-hero__payout-label {
+  font-size: 0.875rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.project-hero__balance {
+  margin-top: var(--spacing-xs);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.project-expenses-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.project-expense__receipt {
+  color: var(--color-primary);
+  text-decoration: none;
+}

@@ -105,6 +105,11 @@
 
       <!-- Expense -->
       <form class="admin-card admin-form hidden" id="expenseForm" data-panel="expense">
+        <label class="admin-label" for="expenseFrom" data-i18n="adminFrom">שולם מ...</label>
+        <select class="admin-input" id="expenseFrom" dir="auto">
+          <option value="" data-i18n="adminFromFund">קופת ועד הבית</option>
+        </select>
+
         <label class="admin-label" for="expenseType" data-i18n="adminType">סוג הוצאה</label>
         <input class="admin-input" id="expenseType" list="expenseTypes" dir="auto" required>
         <datalist id="expenseTypes"></datalist>

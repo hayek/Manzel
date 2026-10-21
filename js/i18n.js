@@ -138,7 +138,13 @@ const I18n = (function() {
       adminLogout: 'יציאה',
       adminSelectApartment: 'יש לבחור דירה',
       adminSelectMonths: 'יש לבחור לפחות חודש אחד',
-      adminNoProjects: 'אין פרויקטים פתוחים'
+      adminNoProjects: 'אין פרויקטים פתוחים',
+      projectPaidOut: 'יצא מהקופה: {amount} ₪',
+      projectBalance: 'יתרה בקופה: {amount} ₪',
+      projectPaidToContractor: 'שולם לקבלן {paid} מתוך {total} ₪',
+      projectExpensesTitle: 'תשלומים מקופת הפרויקט',
+      adminFrom: 'שולם מ...',
+      adminFromFund: 'קופת ועד הבית'
     },
     en: {
       buildingAddress: 'Derech Allenby 131A, Haifa',
@@ -237,7 +243,13 @@ const I18n = (function() {
       adminLogout: 'Log out',
       adminSelectApartment: 'Choose an apartment',
       adminSelectMonths: 'Choose at least one month',
-      adminNoProjects: 'No open projects'
+      adminNoProjects: 'No open projects',
+      projectPaidOut: 'Paid out: {amount} ₪',
+      projectBalance: 'Balance: {amount} ₪',
+      projectPaidToContractor: '{paid} of {total} ₪ paid to the contractor',
+      projectExpensesTitle: 'Payments from the project',
+      adminFrom: 'Paid from',
+      adminFromFund: 'Building fund'
     },
     ar: {
       buildingAddress: 'شارع أللنبي 131أ، حيفا',
@@ -336,7 +348,13 @@ const I18n = (function() {
       adminLogout: 'خروج',
       adminSelectApartment: 'اختر شقة',
       adminSelectMonths: 'اختر شهرًا واحدًا على الأقل',
-      adminNoProjects: 'لا توجد مشاريع مفتوحة'
+      adminNoProjects: 'لا توجد مشاريع مفتوحة',
+      projectPaidOut: 'المدفوع: {amount} ₪',
+      projectBalance: 'الرصيد: {amount} ₪',
+      projectPaidToContractor: 'دُفع للمقاول {paid} من {total} ₪',
+      projectExpensesTitle: 'مدفوعات من صندوق المشروع',
+      adminFrom: 'دُفع من',
+      adminFromFund: 'صندوق لجنة البيت'
     },
     ru: {
       buildingAddress: 'Дерех Алленби 131А, Хайфа',
@@ -435,7 +453,13 @@ const I18n = (function() {
       adminLogout: 'Выйти',
       adminSelectApartment: 'Выберите квартиру',
       adminSelectMonths: 'Выберите хотя бы один месяц',
-      adminNoProjects: 'Нет открытых проектов'
+      adminNoProjects: 'Нет открытых проектов',
+      projectPaidOut: 'Выплачено: {amount} ₪',
+      projectBalance: 'Остаток: {amount} ₪',
+      projectPaidToContractor: 'Подрядчику выплачено {paid} из {total} ₪',
+      projectExpensesTitle: 'Выплаты из фонда проекта',
+      adminFrom: 'Оплачено из',
+      adminFromFund: 'Фонд дома'
     },
     uk: {
       buildingAddress: 'Дерех Алленбі 131А, Хайфа',
@@ -534,7 +558,13 @@ const I18n = (function() {
       adminLogout: 'Вийти',
       adminSelectApartment: 'Оберіть квартиру',
       adminSelectMonths: 'Оберіть хоча б один місяць',
-      adminNoProjects: 'Немає відкритих проєктів'
+      adminNoProjects: 'Немає відкритих проєктів',
+      projectPaidOut: 'Виплачено: {amount} ₪',
+      projectBalance: 'Залишок: {amount} ₪',
+      projectPaidToContractor: 'Підряднику сплачено {paid} з {total} ₪',
+      projectExpensesTitle: 'Виплати з фонду проєкту',
+      adminFrom: 'Сплачено з',
+      adminFromFund: 'Фонд будинку'
     }
   };
 

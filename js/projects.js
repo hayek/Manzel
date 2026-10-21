@@ -7,6 +7,7 @@
 const Projects = (function() {
   const PROJECT_HEADERS = ['id', 'name', 'description', 'per_apartment', 'total_cost', 'due_date', 'status'];
   const PAYMENT_HEADERS = ['project_id', 'apartment', 'amount', 'date', 'method'];
+  const EXPENSE_HEADERS = ['project_id', 'amount', 'date', 'description', 'receipt'];
 
   const METHOD_ALIASES = {
     bit: 'bit',
@@ -136,13 +137,33 @@ const Projects = (function() {
   }
 
   /**
+   * Parse the ProjectExpenses sheet (money paid out of a project's pot)
+   * @param {Object} raw - { cols, rows } from SheetsAPI
+   * @returns {Array<Object>} Expenses: { projectId, amount, date, description, receipt }
+   */
+  function parseProjectExpenses(raw) {
+    if (!raw || !hasHeaders(raw.cols, EXPENSE_HEADERS)) return [];
+
+    return raw.rows
+      .map(row => ({
+        projectId: text(row[0]),
+        amount: toNumber(row[1]),
+        date: text(row[2]),
+        description: text(row[3]),
+        receipt: text(row[4])
+      }))
+      .filter(expense => expense.projectId && expense.amount > 0);
+  }
+
+  /**
    * Compute collection status for one project
    * @param {Object} project - Project from parseProjects
    * @param {Array<Object>} payments - All payments from parsePayments
    * @param {Array<number>} aptNumbers - Apartment numbers in the building
-   * @returns {Object} Summary with goal, collected, paidCount and per-apartment status
+   * @param {Array<Object>} [expenses] - All project expenses from parseProjectExpenses
+   * @returns {Object} Summary with goal, collected, paidCount, paidOut, balance and per-apartment status
    */
-  function summarize(project, payments, aptNumbers) {
+  function summarize(project, payments, aptNumbers, expenses = []) {
     const apartments = {};
     aptNumbers.forEach(apt => {
       apartments[apt] = { status: 'unpaid', paid: 0, remaining: project.perApartment, payments: [] };
@@ -166,13 +187,19 @@ const Projects = (function() {
       collected += Math.min(apt.paid, project.perApartment);
     });
 
+    const projectExpenses = expenses.filter(expense => expense.projectId === project.id);
+    const paidOut = projectExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+
     return {
       project,
       goal: project.perApartment * aptNumbers.length,
       collected,
       paidCount,
       aptCount: aptNumbers.length,
-      apartments
+      apartments,
+      expenses: projectExpenses,
+      paidOut,
+      balance: collected - paidOut
     };
   }
 
@@ -193,10 +220,12 @@ const Projects = (function() {
   return {
     PROJECT_HEADERS,
     PAYMENT_HEADERS,
+    EXPENSE_HEADERS,
     hasHeaders,
     parseDate,
     parseProjects,
     parsePayments,
+    parseProjectExpenses,
     summarize,
     isOverdue
   };
