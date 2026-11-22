@@ -85,7 +85,7 @@ Google Sheets API via Google Visualization API. The site reads these sheets:
 - `Projects` - One row per building project: `id | name | description | per_apartment | total_cost | due_date | status` (`open`/`done`)
 - `ProjectPayments` - One row per payment: `project_id | apartment | amount | date | method` (`cash`/`bit`/`paybox`, empty = cash; split payments add up)
 - `ProjectExpenses` - Money paid out of a project's pot (e.g. the contractor): `project_id | amount | date | description | receipt`. The site shows paid out and balance (collected − paid out).
-- `MoveOuts` (optional) - One row per resident who left: `apartment | name | moved_out`. `moved_out` is any date in their **last** month; unpaid months up to then are theirs, and the current resident only owes from the next month. Shown as "previous resident owes" on the dashboard card and resident page (last year + this year only, like regular debt).
+- `MoveOuts` (optional) - One row per resident who left: `apartment | name | moved_out | owes_from`. `moved_out` is any date in their **last** month; `owes_from` (optional) any date in the **first** month they owe (empty = from the previous move-out, or from the start). Unpaid months in that range are theirs; every other unpaid month is the current resident's. Shown as "previous resident owes" on the dashboard card and resident page (last year + this year only, like regular debt).
 
 The spreadsheet is also connected to a Glide app - never modify existing tabs.
 

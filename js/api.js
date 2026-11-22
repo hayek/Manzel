@@ -352,15 +352,16 @@ const SheetsAPI = (function() {
     const residentInfo = data.residents[aptNumber] || {};
 
     // Debt is counted from the next month (e.g., Jan unpaid counts as debt starting Feb).
-    // Months before the resident moved in belong to whoever lived there before.
+    // Months a past resident is responsible for (MoveOuts sheet) are theirs, not this resident's.
     const now = new Date();
     const currentYear = now.getFullYear();
     const lastYear = currentYear - 1;
     const moveOuts = data.moveOuts || [];
-    const start = aptNumber ? Debt.residentStart(moveOuts, aptNumber) : null;
+    const previousRanges = aptNumber ? Debt.previousRanges(moveOuts, aptNumber) : [];
+    const isOwn = (year, month) => !Debt.isPrevious(previousRanges, year, month);
 
-    const owed = Debt.total(Debt.owedMonths(residentPayments[currentYear], currentYear, now.getMonth(), start));
-    const lastYearOwed = Debt.total(Debt.owedMonths(residentPayments[lastYear], lastYear, 12, start));
+    const owed = Debt.total(Debt.owedMonths(residentPayments[currentYear], currentYear, now.getMonth(), isOwn));
+    const lastYearOwed = Debt.total(Debt.owedMonths(residentPayments[lastYear], lastYear, 12, isOwn));
     const previousResidents = aptNumber ? Debt.previousResidents(moveOuts, aptNumber, residentPayments, now) : [];
 
     // Project dues: every open project, plus any project this apartment still owes
@@ -387,7 +388,7 @@ const SheetsAPI = (function() {
       years,
       owed,
       lastYearOwed,
-      start, // { year, month } the resident moved in, or null
+      previousRanges, // Months past residents are responsible for (Debt.previousRanges)
       previousResidents,
       projects,
       propertyOwner: residentInfo.propertyOwner || '',

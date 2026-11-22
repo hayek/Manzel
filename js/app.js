@@ -366,10 +366,11 @@ const App = (function() {
     const yearPayments = residentPayments[currentYear] || [];
 
     // Debt is counted from the next month (e.g., Jan unpaid counts as debt starting Feb).
-    // Months before the resident moved in are the previous resident's.
+    // Months a past resident is responsible for (MoveOuts sheet) aren't this resident's.
     const moveOuts = appData.moveOuts || [];
-    const start = Debt.residentStart(moveOuts, apt.number);
-    const owed = Debt.total(Debt.owedMonths(yearPayments, currentYear, currentMonth, start));
+    const previousRanges = Debt.previousRanges(moveOuts, apt.number);
+    const owed = Debt.total(Debt.owedMonths(yearPayments, currentYear, currentMonth,
+      (year, month) => !Debt.isPrevious(previousRanges, year, month)));
     const previousOwed = Debt.total(Debt.previousResidents(moveOuts, apt.number, residentPayments, new Date()));
 
     if (previousOwed > 0) {
@@ -419,7 +420,7 @@ const App = (function() {
         box.classList.add('payment-box--discount');
       } else if (isFuture) {
         box.classList.add('payment-box--future');
-      } else if (start && currentYear * 12 + i < start.year * 12 + start.month) {
+      } else if (Debt.isPrevious(previousRanges, currentYear, i)) {
         box.classList.add('payment-box--previous');
       } else {
         box.classList.add('payment-box--unpaid');

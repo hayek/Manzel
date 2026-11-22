@@ -3,9 +3,12 @@
  * Works out which monthly payments are owed, and by whom when residents moved out.
  * Pure functions only - shared by the dashboard and resident pages.
  *
- * MoveOuts sheet (optional): apartment | name | moved_out
- * moved_out is any date in the old resident's LAST month. Earlier unpaid months are
- * theirs; the current resident only owes from the month after.
+ * MoveOuts sheet (optional): apartment | name | moved_out | owes_from
+ * - moved_out: any date in the old resident's LAST month.
+ * - owes_from (optional): any date in the FIRST month they owe. Empty = from the
+ *   month after the resident before them moved out (or from the start).
+ * Unpaid months inside that range are the old resident's; every other unpaid
+ * month belongs to whoever lives there now.
  */
 
 const Debt = (function() {
@@ -17,58 +20,71 @@ const Debt = (function() {
     return year * 12 + month;
   }
 
+  /** Month index of a date cell, or null if it can't be read */
+  function cellMonth(value) {
+    const date = Projects.parseDate(value);
+    return date ? monthIndex(date.getFullYear(), date.getMonth()) : null;
+  }
+
   /**
    * Parse the MoveOuts sheet
    * @param {Object|null} raw - Parsed sheet { cols, rows }, or null if it failed to load
-   * @returns {Array} [{ apartment, name, year, month }] oldest first
+   * @returns {Array} [{ apartment, name, from, to }] month indexes, oldest move-out first
    */
   function parseMoveOuts(raw) {
     if (!raw || !Projects.hasHeaders(raw.cols, MOVE_OUT_HEADERS)) return [];
 
     return raw.rows
-      .map(row => {
-        const date = Projects.parseDate(row[2]);
-        return {
-          apartment: Number(row[0]),
-          name: row[1] ? String(row[1]).trim() : '',
-          year: date ? date.getFullYear() : null,
-          month: date ? date.getMonth() : null
-        };
-      })
-      .filter(entry => entry.apartment > 0 && entry.year !== null)
-      .sort((a, b) => monthIndex(a.year, a.month) - monthIndex(b.year, b.month));
+      .map(row => ({
+        apartment: Number(row[0]),
+        name: row[1] ? String(row[1]).trim() : '',
+        to: cellMonth(row[2]),
+        from: cellMonth(row[3])
+      }))
+      .filter(entry => entry.apartment > 0 && entry.to !== null)
+      .sort((a, b) => a.to - b.to);
   }
 
   /**
-   * First month the current resident of an apartment pays for
+   * The months each past resident of an apartment is responsible for
    * @param {Array} moveOuts - From parseMoveOuts
    * @param {number|string} apartment - Apartment number
-   * @returns {Object|null} { year, month }, or null if nobody moved out
+   * @returns {Array} [{ name, from, to }] month indexes; from = null means "from the start"
    */
-  function residentStart(moveOuts, apartment) {
+  function previousRanges(moveOuts, apartment) {
     const own = moveOuts.filter(entry => entry.apartment === Number(apartment));
-    if (own.length === 0) return null;
-    const last = own[own.length - 1];
-    const next = monthIndex(last.year, last.month) + 1;
-    return { year: Math.floor(next / 12), month: next % 12 };
+    return own.map((entry, i) => {
+      const afterPrevious = i > 0 ? own[i - 1].to + 1 : null;
+      const from = [afterPrevious, entry.from].filter(value => value !== null);
+      return { name: entry.name, from: from.length ? Math.max(...from) : null, to: entry.to };
+    });
   }
 
   /**
-   * Unpaid months of one year, from `start` on
+   * Is this month a past resident's to pay?
+   * @param {Array} ranges - From previousRanges
+   * @param {number} year - Year
+   * @param {number} month - Month 0-11
+   * @returns {boolean} True if it falls inside a past resident's range
+   */
+  function isPrevious(ranges, year, month) {
+    const index = monthIndex(Number(year), month);
+    return ranges.some(range => (range.from === null || index >= range.from) && index <= range.to);
+  }
+
+  /**
+   * Unpaid months of one year
    * 0 means discount (paid yearly), so it is not debt.
    * @param {Array} yearPayments - 12 entries { amount } (or missing)
    * @param {number} year - The year these payments are for
    * @param {number} monthLimit - Check months 0..monthLimit-1
-   * @param {Object|null} start - Skip months before { year, month }
-   * @param {Object|null} [end] - Skip months after { year, month }
+   * @param {Function} [keep] - (year, month) => boolean, which months to count
    * @returns {Array} [{ year, month, owed, partial }]
    */
-  function owedMonths(yearPayments, year, monthLimit, start, end) {
+  function owedMonths(yearPayments, year, monthLimit, keep) {
     const months = [];
     for (let month = 0; month < monthLimit; month++) {
-      const index = monthIndex(year, month);
-      if (start && index < monthIndex(start.year, start.month)) continue;
-      if (end && index > monthIndex(end.year, end.month)) continue;
+      if (keep && !keep(year, month)) continue;
 
       const payment = (yearPayments || [])[month];
       if (!payment || payment.amount === null) {
@@ -100,18 +116,15 @@ const Debt = (function() {
    */
   function previousResidents(moveOuts, apartment, payments, now) {
     const currentYear = now.getFullYear();
-    const own = moveOuts.filter(entry => entry.apartment === Number(apartment));
 
-    return own
-      .map((entry, i) => {
-        const before = own[i - 1];
-        const start = before ? residentStart([before], apartment) : null;
-        const end = { year: entry.year, month: entry.month };
+    return previousRanges(moveOuts, apartment)
+      .map(range => {
+        const inRange = (year, month) => isPrevious([range], year, month);
         const months = [
-          ...owedMonths(payments[currentYear - 1], currentYear - 1, 12, start, end),
-          ...owedMonths(payments[currentYear], currentYear, now.getMonth(), start, end)
+          ...owedMonths(payments[currentYear - 1], currentYear - 1, 12, inRange),
+          ...owedMonths(payments[currentYear], currentYear, now.getMonth(), inRange)
         ];
-        return { name: entry.name, months, owed: total(months) };
+        return { name: range.name, months, owed: total(months) };
       })
       .filter(resident => resident.owed > 0)
       .reverse();
@@ -120,8 +133,10 @@ const Debt = (function() {
   return {
     MONTHLY_AMOUNT,
     MOVE_OUT_HEADERS,
+    monthIndex,
     parseMoveOuts,
-    residentStart,
+    previousRanges,
+    isPrevious,
     owedMonths,
     total,
     previousResidents

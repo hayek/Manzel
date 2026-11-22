@@ -360,7 +360,7 @@ const ResidentPage = (function() {
         indicator.classList.add('payment-item__indicator--unpaid');
         statusText.textContent = '-';
         statusText.style.color = 'var(--color-text-light)';
-      } else if (isBeforeMoveIn(year, i)) {
+      } else if (isPreviousResidents(year, i)) {
         indicator.classList.add('payment-item__indicator--previous');
         statusText.textContent = I18n.t('previousResident');
         statusText.style.color = 'var(--color-text-light)';
@@ -380,14 +380,13 @@ const ResidentPage = (function() {
   }
 
   /**
-   * Was this month before the current resident moved in?
+   * Is this month a past resident's to pay (MoveOuts sheet)?
    * @param {number} year - Year
    * @param {number} month - Month 0-11
    * @returns {boolean} True if it belongs to a previous resident
    */
-  function isBeforeMoveIn(year, month) {
-    const start = residentData && residentData.start;
-    return Boolean(start) && Number(year) * 12 + month < start.year * 12 + start.month;
+  function isPreviousResidents(year, month) {
+    return Debt.isPrevious((residentData && residentData.previousRanges) || [], year, month);
   }
 
   /**
@@ -412,13 +411,13 @@ const ResidentPage = (function() {
   }
 
   /**
-   * Get this resident's unpaid months for a given year (skips months before they moved in)
+   * Get this resident's unpaid months for a given year (skips months a past resident owes)
    * @param {number} year - The year
    * @param {number} monthLimit - Number of months to check (12 for past year, current month for current year)
    * @returns {Array} List of unpaid month names
    */
   function getUnpaidMonthsList(year, monthLimit) {
-    return Debt.owedMonths(residentData.payments[year], year, monthLimit, residentData.start)
+    return Debt.owedMonths(residentData.payments[year], year, monthLimit, (y, m) => !isPreviousResidents(y, m))
       .map(entry => monthLabel(entry));
   }
 

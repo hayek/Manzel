@@ -145,7 +145,7 @@ test('getResidentData splits debt between the resident and whoever moved out', a
   const resident = await SheetsAPI.getResidentData('אמיר');
 
   assert.equal(resident.owed, 0); // November isn't debt until December
-  assert.deepEqual(resident.start, { year: 2026, month: 10 });
+  assert.equal(resident.previousRanges.length, 1);
   assert.equal(resident.previousResidents.length, 1);
   assert.equal(resident.previousResidents[0].name, 'תמיר');
   assert.equal(resident.previousResidents[0].owed, 200);
@@ -158,7 +158,28 @@ test('without a MoveOuts tab the whole debt stays with the resident', async t =>
 
   const resident = await SheetsAPI.getResidentData('אמיר');
 
-  assert.equal(resident.start, null);
+  assert.deepEqual(resident.previousRanges, []);
   assert.deepEqual(resident.previousResidents, []);
   assert.equal(resident.owed, 500); // Jan-Oct of 2026, all empty
+});
+
+test('owes_from leaves earlier unpaid months with the current resident', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date(2026, 10, 22) });
+  const months = [' ינו׳', ' פבר׳', ' מרץ', ' אפר׳', ' מאי', ' יוני', ' יולי', ' אוג׳', ' ספט׳', ' אוק׳', ' נוב׳', ' דצמ׳'];
+  installFetch({
+    ...BASE_TABS,
+    // Apartment 5's real data: Nov 2025 empty; 2026 Jan-Jun paid, Jul-Dec empty
+    Payments: table(['חודש', 'אמיר', 'year'], [
+      ...months.map((m, i) => [m, i === 10 ? null : 50, 2025]),
+      ...months.map((m, i) => [m, i < 6 ? 50 : null, 2026])
+    ]),
+    MoveOuts: table([...Debt.MOVE_OUT_HEADERS, 'owes_from'], [[1, 'תמיר', '31/10/2026', '01/07/2026']])
+  });
+  await SheetsAPI.fetchAllData(true);
+
+  const resident = await SheetsAPI.getResidentData('אמיר');
+
+  assert.equal(resident.lastYearOwed, 50); // Nov 2025 is the new resident's
+  assert.equal(resident.owed, 0);
+  assert.equal(resident.previousResidents[0].owed, 200); // Jul-Oct 2026
 });
