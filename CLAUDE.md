@@ -53,6 +53,7 @@ const ModuleName = (function() {
 - **ExpensePage** (`js/expense.js`) - Expense detail view
 - **Projects** (`js/projects.js`) - Pure parsing/status logic for building projects (Node-testable; shared by all pages)
 - **ProjectPage** (`js/project.js`) - Project detail view
+- **Debt** (`js/debt.js`) - Pure monthly-debt logic: owed months, move-in month, what previous residents owe (Node-testable; shared by all pages)
 - **Expenses** (`js/expenses.js`) - Pure grouping of expenses by month (date parsed from the notes column)
 - **AdminAPI** (`js/admin-api.js`) - Client for the Apps Script web app (login with PIN, write actions)
 - **AdminPage** (`js/admin.js`) - Admin page: monthly payments, project payments, expenses
@@ -84,6 +85,7 @@ Google Sheets API via Google Visualization API. The site reads these sheets:
 - `Projects` - One row per building project: `id | name | description | per_apartment | total_cost | due_date | status` (`open`/`done`)
 - `ProjectPayments` - One row per payment: `project_id | apartment | amount | date | method` (`cash`/`bit`/`paybox`, empty = cash; split payments add up)
 - `ProjectExpenses` - Money paid out of a project's pot (e.g. the contractor): `project_id | amount | date | description | receipt`. The site shows paid out and balance (collected − paid out).
+- `MoveOuts` (optional) - One row per resident who left: `apartment | name | moved_out`. `moved_out` is any date in their **last** month; unpaid months up to then are theirs, and the current resident only owes from the next month. Shown as "previous resident owes" on the dashboard card and resident page (last year + this year only, like regular debt).
 
 The spreadsheet is also connected to a Glide app - never modify existing tabs.
 
@@ -111,7 +113,7 @@ Project money is separate from the maintenance fund: it never affects the total,
 
 ### Caching
 - Session storage with 5-minute TTL
-- Cache key: `manzel_data_v7` (bump when the cached data shape changes)
+- Cache key: `manzel_data_v8` (bump when the cached data shape changes)
 - Force refresh available via `SheetsAPI.fetchAllData(true)`
 
 ### Theming

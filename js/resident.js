@@ -50,6 +50,7 @@ const ResidentPage = (function() {
       renderPropertyOwner(residentData.propertyOwner);
       renderOwedAmount(residentData.owed, residentData.payments);
       renderLastYearOwed(residentData.lastYearOwed, residentData.payments);
+      renderPreviousResidents(residentData.previousResidents);
       renderProjects(residentData.projects);
       renderPaymentHistory(residentData.payments, residentData.years);
 
@@ -124,21 +125,7 @@ const ResidentPage = (function() {
       owedAmount.textContent = formatNumber(owed);
 
       // Show unpaid months for current year
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth();
-      const yearPayments = payments[currentYear] || [];
-      const monthlyAmount = 50;
-
-      const unpaidMonths = [];
-      for (let i = 0; i < currentMonth; i++) {
-        const payment = yearPayments[i];
-        // 0 means discount (paid yearly), so skip it
-        if (!payment || payment.amount === null) {
-          unpaidMonths.push(I18n.getMonthName(i));
-        } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
-          unpaidMonths.push(I18n.getMonthName(i) + ' (' + I18n.t('partial') + ')');
-        }
-      }
+      const unpaidMonths = getUnpaidMonthsList(new Date().getFullYear(), new Date().getMonth());
 
       if (unpaidMonths.length > 0) {
         const monthsList = document.createElement('p');
@@ -163,20 +150,7 @@ const ResidentPage = (function() {
       lastYearAmount.textContent = formatNumber(lastYearOwed);
 
       // Show unpaid months for last year
-      const lastYear = new Date().getFullYear() - 1;
-      const yearPayments = payments[lastYear] || [];
-      const monthlyAmount = 50;
-
-      const unpaidMonths = [];
-      for (let i = 0; i < 12; i++) {
-        const payment = yearPayments[i];
-        // 0 means discount (paid yearly), so skip it
-        if (!payment || payment.amount === null) {
-          unpaidMonths.push(I18n.getMonthName(i));
-        } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
-          unpaidMonths.push(I18n.getMonthName(i) + ' (' + I18n.t('partial') + ')');
-        }
-      }
+      const unpaidMonths = getUnpaidMonthsList(new Date().getFullYear() - 1, 12);
 
       if (unpaidMonths.length > 0) {
         const monthsList = document.createElement('p');
@@ -185,6 +159,33 @@ const ResidentPage = (function() {
         lastYearCard.appendChild(monthsList);
       }
     }
+  }
+
+  /**
+   * Show what earlier residents of this apartment still owe
+   * @param {Array} previousResidents - From Debt.previousResidents
+   */
+  function renderPreviousResidents(previousResidents) {
+    if (!previousResidents || previousResidents.length === 0) return;
+
+    const card = document.getElementById('previousResidentsCard');
+    previousResidents.forEach(resident => {
+      const label = document.createElement('p');
+      label.className = 'owed-card__label';
+      label.setAttribute('dir', 'auto');
+      label.textContent = I18n.t('previousResidentOwes').replace('{name}', resident.name);
+
+      const amount = document.createElement('p');
+      amount.className = 'owed-card__amount';
+      amount.textContent = `${formatNumber(resident.owed)} ₪`;
+
+      const months = document.createElement('p');
+      months.className = 'owed-card__months';
+      months.textContent = resident.months.map(entry => monthLabel(entry, true)).join(', ');
+
+      card.append(label, amount, months);
+    });
+    card.classList.remove('hidden');
   }
 
   /**
@@ -359,6 +360,10 @@ const ResidentPage = (function() {
         indicator.classList.add('payment-item__indicator--unpaid');
         statusText.textContent = '-';
         statusText.style.color = 'var(--color-text-light)';
+      } else if (isBeforeMoveIn(year, i)) {
+        indicator.classList.add('payment-item__indicator--previous');
+        statusText.textContent = I18n.t('previousResident');
+        statusText.style.color = 'var(--color-text-light)';
       } else {
         indicator.classList.add('payment-item__indicator--unpaid');
         statusText.textContent = I18n.t('notPaid');
@@ -375,6 +380,17 @@ const ResidentPage = (function() {
   }
 
   /**
+   * Was this month before the current resident moved in?
+   * @param {number} year - Year
+   * @param {number} month - Month 0-11
+   * @returns {boolean} True if it belongs to a previous resident
+   */
+  function isBeforeMoveIn(year, month) {
+    const start = residentData && residentData.start;
+    return Boolean(start) && Number(year) * 12 + month < start.year * 12 + start.month;
+  }
+
+  /**
    * Format number with locale
    * @param {number} num - Number to format
    * @returns {string} Formatted number
@@ -384,25 +400,26 @@ const ResidentPage = (function() {
   }
 
   /**
-   * Get unpaid months for a given year
-   * @param {Array} yearPayments - Payment data for the year
+   * Name an owed month, e.g. "Mar (partial)"
+   * @param {Object} entry - From Debt.owedMonths
+   * @param {boolean} [withYear] - Add the year when it isn't this year
+   * @returns {string} Month label
+   */
+  function monthLabel(entry, withYear) {
+    let label = I18n.getMonthName(entry.month);
+    if (withYear && entry.year !== new Date().getFullYear()) label += ` ${entry.year}`;
+    return entry.partial ? `${label} (${I18n.t('partial')})` : label;
+  }
+
+  /**
+   * Get this resident's unpaid months for a given year (skips months before they moved in)
+   * @param {number} year - The year
    * @param {number} monthLimit - Number of months to check (12 for past year, current month for current year)
    * @returns {Array} List of unpaid month names
    */
-  function getUnpaidMonthsList(yearPayments, monthLimit) {
-    const monthlyAmount = 50;
-    const unpaidMonths = [];
-
-    for (let i = 0; i < monthLimit; i++) {
-      const payment = yearPayments[i];
-      if (!payment || payment.amount === null) {
-        unpaidMonths.push(I18n.getMonthName(i));
-      } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
-        unpaidMonths.push(I18n.getMonthName(i) + ' (' + I18n.t('partial') + ')');
-      }
-    }
-
-    return unpaidMonths;
+  function getUnpaidMonthsList(year, monthLimit) {
+    return Debt.owedMonths(residentData.payments[year], year, monthLimit, residentData.start)
+      .map(entry => monthLabel(entry));
   }
 
   /**
@@ -426,8 +443,7 @@ const ResidentPage = (function() {
 
     // Current year debt (include current month)
     if (residentData.owed > 0) {
-      const yearPayments = residentData.payments[currentYear] || [];
-      const unpaidMonths = getUnpaidMonthsList(yearPayments, currentMonth + 1);
+      const unpaidMonths = getUnpaidMonthsList(currentYear, currentMonth + 1);
 
       let currentYearLine = I18n.t('debtMessageCurrentYear')
         .replace('{amount}', formatNumber(residentData.owed))
@@ -443,8 +459,7 @@ const ResidentPage = (function() {
     // Last year debt
     if (residentData.lastYearOwed > 0) {
       lines.push('');
-      const yearPayments = residentData.payments[lastYear] || [];
-      const unpaidMonths = getUnpaidMonthsList(yearPayments, 12);
+      const unpaidMonths = getUnpaidMonthsList(lastYear, 12);
 
       // Use different message if there's no current year debt
       const lastYearKey = residentData.owed > 0 ? 'debtMessageLastYear' : 'debtMessageLastYearOnly';

@@ -27,7 +27,7 @@ function respondWith(body) {
 
 test.beforeEach(() => {
   AdminAPI.logout();
-  sessionStorage.removeItem('manzel_data_v7');
+  sessionStorage.removeItem('manzel_data_v8');
 });
 
 test('login with a wrong PIN stores nothing', async () => {
@@ -66,14 +66,14 @@ test('call sends the request id so a retry is not saved twice', async () => {
 });
 
 test('a successful call clears the public data cache; a failed one does not', async () => {
-  sessionStorage.setItem('manzel_data_v7', 'cached');
+  sessionStorage.setItem('manzel_data_v8', 'cached');
   respondWith({ ok: false, error: 'invalid' });
   await AdminAPI.call('expense', {});
-  assert.equal(sessionStorage.getItem('manzel_data_v7'), 'cached');
+  assert.equal(sessionStorage.getItem('manzel_data_v8'), 'cached');
 
   respondWith({ ok: true });
   await AdminAPI.call('expense', {});
-  assert.equal(sessionStorage.getItem('manzel_data_v7'), null);
+  assert.equal(sessionStorage.getItem('manzel_data_v8'), null);
 });
 
 test('a network failure comes back as an error result', async () => {

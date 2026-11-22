@@ -2410,3 +2410,30 @@ details[open] > .expense-month__summary .expense-month__title::before {
   background: var(--color-text);
   box-shadow: 0 0 0 1px var(--color-surface);
 }
+
+/* Months that belong to a resident who moved out (MoveOuts sheet) */
+.payment-box--previous {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-gray-200),
+    var(--color-gray-200) 2px,
+    var(--color-gray-400) 2px,
+    var(--color-gray-400) 4px
+  );
+}
+
+.payment-item__indicator--previous {
+  background: var(--color-gray-200);
+  border: 1px solid var(--color-gray-400);
+}
+
+.apartment__previous-debt {
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+}
+
+.owed-card--previous {
+  background: var(--color-surface-secondary);
+  color: var(--color-text);
+  border: 1px solid var(--color-gray-200);
+}

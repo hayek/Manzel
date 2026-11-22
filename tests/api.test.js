@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 global.Projects = require('../js/projects.js');
+global.Debt = require('../js/debt.js');
 const SheetsAPI = require('../js/api.js');
 
 function table(cols, rows) {
@@ -125,4 +126,39 @@ test('loads project expenses, and a missing tab gives none', async () => {
 
   installFetch(BASE_TABS);
   assert.deepEqual((await SheetsAPI.fetchAllData(true)).projectExpenses, []);
+});
+
+test('getResidentData splits debt between the resident and whoever moved out', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date(2026, 10, 22) });
+  const months = [' ינו׳', ' פבר׳', ' מרץ', ' אפר׳', ' מאי', ' יוני', ' יולי', ' אוג׳', ' ספט׳', ' אוק׳', ' נוב׳', ' דצמ׳'];
+  installFetch({
+    ...BASE_TABS,
+    // 2025 all paid; 2026 Jan-Jun paid, Jul-Dec empty
+    Payments: table(['חודש', 'אמיר', 'year'], [
+      ...months.map(m => [m, 50, 2025]),
+      ...months.map((m, i) => [m, i < 6 ? 50 : null, 2026])
+    ]),
+    MoveOuts: table(Debt.MOVE_OUT_HEADERS, [[1, 'תמיר', '31/10/2026']])
+  });
+  await SheetsAPI.fetchAllData(true);
+
+  const resident = await SheetsAPI.getResidentData('אמיר');
+
+  assert.equal(resident.owed, 0); // November isn't debt until December
+  assert.deepEqual(resident.start, { year: 2026, month: 10 });
+  assert.equal(resident.previousResidents.length, 1);
+  assert.equal(resident.previousResidents[0].name, 'תמיר');
+  assert.equal(resident.previousResidents[0].owed, 200);
+});
+
+test('without a MoveOuts tab the whole debt stays with the resident', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date(2026, 10, 22) });
+  installFetch({ ...BASE_TABS, Payments: table(['חודש', 'אמיר', 'year'], [[' ינו׳', null, 2026]]) });
+  await SheetsAPI.fetchAllData(true);
+
+  const resident = await SheetsAPI.getResidentData('אמיר');
+
+  assert.equal(resident.start, null);
+  assert.deepEqual(resident.previousResidents, []);
+  assert.equal(resident.owed, 500); // Jan-Oct of 2026, all empty
 });

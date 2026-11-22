@@ -5,7 +5,7 @@
 
 const SheetsAPI = (function() {
   const SPREADSHEET_ID = '1_zdYPJNYSifPeQPI5CtqhfnvgzOFgxjOUe0jJDVzo1c';
-  const CACHE_KEY = 'manzel_data_v7'; // Updated to include ProjectExpenses
+  const CACHE_KEY = 'manzel_data_v8'; // Updated to include MoveOuts
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   /**
@@ -136,7 +136,7 @@ const SheetsAPI = (function() {
       if (cached) return cached;
     }
 
-    const [payments, total, expenses, building, residents, projects, projectPayments, projectExpenses] = await Promise.all([
+    const [payments, total, expenses, building, residents, projects, projectPayments, projectExpenses, moveOuts] = await Promise.all([
       fetchSheet('Payments'),
       fetchSheet('total'),
       fetchSheet('Expence'),
@@ -144,7 +144,8 @@ const SheetsAPI = (function() {
       fetchSheet('Residents'),
       fetchOptionalSheet('Projects', 1),
       fetchOptionalSheet('ProjectPayments', 1),
-      fetchOptionalSheet('ProjectExpenses', 1)
+      fetchOptionalSheet('ProjectExpenses', 1),
+      fetchOptionalSheet('MoveOuts', 1)
     ]);
 
     const data = {
@@ -155,7 +156,8 @@ const SheetsAPI = (function() {
       residents: processResidents(residents),
       projects: Projects.parseProjects(projects),
       projectPayments: Projects.parsePayments(projectPayments),
-      projectExpenses: Projects.parseProjectExpenses(projectExpenses)
+      projectExpenses: Projects.parseProjectExpenses(projectExpenses),
+      moveOuts: Debt.parseMoveOuts(moveOuts)
     };
 
     setCachedData(data);
@@ -349,40 +351,17 @@ const SheetsAPI = (function() {
     // Look up resident info by apartment number
     const residentInfo = data.residents[aptNumber] || {};
 
-    // Calculate amount owed (unpaid months for current year up to current month)
+    // Debt is counted from the next month (e.g., Jan unpaid counts as debt starting Feb).
+    // Months before the resident moved in belong to whoever lived there before.
     const now = new Date();
     const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth(); // 0-11
-    const monthlyAmount = 50;
-
-    let owed = 0;
-    const currentYearPayments = residentPayments[currentYear] || [];
-
-    // Debt is counted from the next month (e.g., Jan unpaid counts as debt starting Feb)
-    // 0 means discount (paid yearly), so don't count as debt
-    for (let i = 0; i < currentMonth; i++) {
-      const payment = currentYearPayments[i];
-      if (!payment || payment.amount === null) {
-        owed += monthlyAmount;
-      } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
-        owed += monthlyAmount - payment.amount;
-      }
-    }
-
-    // Calculate last year owed (all 12 months)
     const lastYear = currentYear - 1;
-    let lastYearOwed = 0;
-    const lastYearPayments = residentPayments[lastYear] || [];
+    const moveOuts = data.moveOuts || [];
+    const start = aptNumber ? Debt.residentStart(moveOuts, aptNumber) : null;
 
-    // 0 means discount (paid yearly), so don't count as debt
-    for (let i = 0; i < 12; i++) {
-      const payment = lastYearPayments[i];
-      if (!payment || payment.amount === null) {
-        lastYearOwed += monthlyAmount;
-      } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
-        lastYearOwed += monthlyAmount - payment.amount;
-      }
-    }
+    const owed = Debt.total(Debt.owedMonths(residentPayments[currentYear], currentYear, now.getMonth(), start));
+    const lastYearOwed = Debt.total(Debt.owedMonths(residentPayments[lastYear], lastYear, 12, start));
+    const previousResidents = aptNumber ? Debt.previousResidents(moveOuts, aptNumber, residentPayments, now) : [];
 
     // Project dues: every open project, plus any project this apartment still owes
     const aptNumbers = data.building.flatMap(floor => floor.apartments);
@@ -408,6 +387,8 @@ const SheetsAPI = (function() {
       years,
       owed,
       lastYearOwed,
+      start, // { year, month } the resident moved in, or null
+      previousResidents,
       projects,
       propertyOwner: residentInfo.propertyOwner || '',
       phone: residentInfo.phone || ''

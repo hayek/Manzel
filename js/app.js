@@ -364,18 +364,19 @@ const App = (function() {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
     const yearPayments = residentPayments[currentYear] || [];
-    const monthlyAmount = 50;
-    let owed = 0;
 
-    // Debt is counted from the next month (e.g., Jan unpaid counts as debt starting Feb)
-    for (let i = 0; i < currentMonth; i++) {
-      const payment = yearPayments[i];
-      // 0 means discount (paid yearly), so don't count as debt
-      if (!payment || payment.amount === null) {
-        owed += monthlyAmount;
-      } else if (payment.amount > 0 && payment.amount < monthlyAmount) {
-        owed += monthlyAmount - payment.amount;
-      }
+    // Debt is counted from the next month (e.g., Jan unpaid counts as debt starting Feb).
+    // Months before the resident moved in are the previous resident's.
+    const moveOuts = appData.moveOuts || [];
+    const start = Debt.residentStart(moveOuts, apt.number);
+    const owed = Debt.total(Debt.owedMonths(yearPayments, currentYear, currentMonth, start));
+    const previousOwed = Debt.total(Debt.previousResidents(moveOuts, apt.number, residentPayments, new Date()));
+
+    if (previousOwed > 0) {
+      const previous = document.createElement('span');
+      previous.className = 'apartment__previous-debt';
+      previous.textContent = I18n.t('previousResidentDebt').replace('{amount}', formatNumber(previousOwed));
+      nameBlock.appendChild(previous);
     }
 
     // Right side with debt and apt number
@@ -418,6 +419,8 @@ const App = (function() {
         box.classList.add('payment-box--discount');
       } else if (isFuture) {
         box.classList.add('payment-box--future');
+      } else if (start && currentYear * 12 + i < start.year * 12 + start.month) {
+        box.classList.add('payment-box--previous');
       } else {
         box.classList.add('payment-box--unpaid');
       }
