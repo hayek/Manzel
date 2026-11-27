@@ -446,6 +446,37 @@ body {
   visibility: visible;
 }
 
+/* Lock Code Section */
+.lock-code-section {
+  margin: var(--spacing-xl) 0;
+}
+
+.lock-code-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-gray-200);
+}
+
+.lock-code-card__icon {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.lock-code-card__code {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  margin-inline-end: -0.3em;
+}
+
 /* Expenses Section */
 .expenses-section {
   margin: var(--spacing-xl) 0;
